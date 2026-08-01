@@ -1,13 +1,119 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- AUTH & USERS ----------
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  isActive      Boolean   @default(true)
+  roleId        String
+  role          Role      @relation(fields: [roleId], references: [id])
+  createdById   String?   // who created this user (Super Admin, usually)
+  createdBy     User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers  User[]    @relation("UserCreatedBy")
+
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+
+  userPermissions UserPermission[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// ---------- RBAC ----------
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique // SUPER_ADMIN, SUB_ADMIN, ADMIN
+  description String?
+  users       User[]
+  permissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Permission {
+  id       String @id @default(uuid())
+  resource String // e.g. "users", "reports", "settings"
+  action   String // e.g. "read", "write", "delete"
+  roles    RolePermission[]
+
+  userPermissions UserPermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+
+
+// ------------- user permissions ----------
+
+model UserPermission {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedById  String     // which Super Admin granted this
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}
+
+// join table: which permissions each role has
+// this is what lets Super Admin dynamically assign modules to a Sub Admin
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ---------- AUDIT ----------
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String   // e.g. "CREATE", "UPDATE", "DELETE"
+  resource   String   // e.g. "User", "Report"
+  resourceId String?
+  metadata   Json?    // flexible details — old/new values, etc. (Postgres JSONB)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
 }
