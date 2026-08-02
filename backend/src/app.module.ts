@@ -10,6 +10,9 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AiModule } from './modules/ai/ai.module';
+import { RolesModule } from './modules/roles/roles.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { CustomerAuthModule } from './modules/customer-auth/customer-auth.module';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { AiModule } from './modules/ai/ai.module';
     PermissionsModule,
     AuditLogsModule,
     AiModule,
+    RolesModule,
+    PaymentsModule,
+    CustomerAuthModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
