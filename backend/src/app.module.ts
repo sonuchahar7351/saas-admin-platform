@@ -14,6 +14,8 @@ import { RolesModule } from './modules/roles/roles.module';
 import { CustomerAuthModule } from './modules/customer-auth/customer-auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { NgoModule } from './modules/ngos/ngo.module';
+import { MediaModule } from './modules/media/media.module';
+import { CampaignsModule } from './modules/campaigns/campaigns.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { NgoModule } from './modules/ngos/ngo.module';
     CustomerAuthModule,
     CategoriesModule,
     NgoModule,
+    MediaModule,
+    CampaignsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

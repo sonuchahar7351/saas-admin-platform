@@ -11,6 +11,21 @@ export const navItems: NavItem[] = [
     roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
   },
   {
+    label: "Campaigns",
+    href: "/dashboard/campaigns",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
+    label: "Categories",
+    href: "/dashboard/categories",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
+    label: "NGOs",
+    href: "/dashboard/ngos",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
     label: "Users",
     href: "/dashboard/users",
     roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],

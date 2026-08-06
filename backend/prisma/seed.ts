@@ -32,6 +32,12 @@ async function main() {
     { resource: 'ngos', action: 'read' },
     { resource: 'ngos', action: 'write' },
     { resource: 'ngos', action: 'delete' },
+    { resource: 'media', action: 'read' },
+    { resource: 'media', action: 'write' },
+    { resource: 'media', action: 'delete' },
+    { resource: 'campaigns', action: 'read' },
+    { resource: 'campaigns', action: 'write' },
+    { resource: 'campaigns', action: 'delete' },
   ];
 
   for (const p of permissions) {
@@ -61,7 +67,7 @@ async function main() {
   const usersReadPermission = await prisma.permission.findMany({
     where: {
       action: 'read',
-      resource: { in: ['users', 'categories', 'ngos'] },
+      resource: { in: ['users', 'categories', 'ngos', 'media', 'campaigns'] },
     },
   });
 
@@ -80,6 +86,7 @@ async function main() {
   }
 
   const hashedPassword = await bcrypt.hash('ChangeMe123!', 10);
+
   await prisma.user.upsert({
     where: { email: 'superadmin@example.com' },
     update: {},
