@@ -25,6 +25,8 @@ model User {
   auditLogs     AuditLog[]
 
   userPermissions UserPermission[]
+  createdCampaigns Campaign[]
+  uploadedMedia    Media[]
  
 
   createdAt     DateTime  @default(now())
@@ -119,24 +121,6 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-
-//----------- PAYMENT ---------
-
-model Payment {
-  id              String   @id @default(uuid())
-  customerId        String
-  customer          Customer @relation(fields: [customerId], references: [id])
-  razorpayOrderId String   @unique
-  razorpayPaymentId String?
-  amount          Int      // stored in paise (smallest unit) — avoids float rounding issues
-  currency        String   @default("INR")
-  status          String   @default("CREATED") // CREATED, PAID, FAILED
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@map("payments")
-}
-
 //------------- CUSTOMERS ----------
 
 model Customer {
@@ -146,7 +130,7 @@ model Customer {
   name          String
   isActive      Boolean   @default(true)
   refreshTokens CustomerRefreshToken[]
-  payments      Payment[]
+  donations   Donation[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -163,4 +147,243 @@ model CustomerRefreshToken {
   createdAt  DateTime @default(now())
 
   @@map("customer_refresh_tokens")
+}
+
+// ---------- MEDIA ----------
+
+enum MediaCategory {
+  CAMPAIGN
+  CATEGORY
+  PRODUCT
+  JOURNEY
+  TESTIMONIAL
+  GALLERY
+}
+
+model Media {
+  id            String        @id @default(uuid())
+  url           String        // public CDN URL
+  key           String        // S3 object key, needed for deletion
+  category      MediaCategory
+  tags          String[]      @default([])
+  uploadedById  String
+  uploadedBy    User          @relation(fields: [uploadedById], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([category])
+  @@map("media")
+}
+
+// ---------- CATEGORY & NGO ----------
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  imageId   String?
+  isActive  Boolean    @default(true)
+  campaigns Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Ngo {
+  id          String     @id @default(uuid())
+  name        String
+  logoId      String?
+  description String?
+  website     String?
+  email       String?
+  phone       String?
+  address     String?
+  isActive    Boolean    @default(true)
+  campaigns   Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ngos")
+}
+
+// ------------ Campaign -------------
+
+enum CampaignStatus {
+  CREATED
+  ACTIVE
+  COMPLETED
+  DELETED
+}
+
+model Campaign {
+  id               String         @id @default(uuid())
+  title            String
+  slug             String         @unique
+  ngoId            String
+  ngo              Ngo            @relation(fields: [ngoId], references: [id])
+  categoryId       String
+  category         Category       @relation(fields: [categoryId], references: [id])
+  goalAmount       Int            // paise
+  shortDescription String
+  cardImageId      String?
+  story            Json           // TipTap JSON document
+  status           CampaignStatus @default(CREATED)
+  expiryDate       DateTime
+
+  donationPresets  Json           // [{ amount: 1000, isDefault: true }, ...]
+  tipPresets       Json           // [{ percentage: 7, isDefault: true }, ...]
+
+  createdById      String
+  createdBy        User           @relation(fields: [createdById], references: [id])
+
+  products     Product[]
+  journeys     CampaignJourney[]
+  testimonials Testimonial[]
+  updates      Update[]
+  donations    Donation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([categoryId])
+  @@map("campaigns")
+}
+
+
+//-------------------Product-------------
+
+enum ProductType {
+  SMALL
+  MEDIUM
+  MEGA
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  campaignId  String
+  campaign    Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  imageId     String?
+  title       String
+  description String
+  quantity    Int
+  priority    Int         @default(0)
+  amount      Int
+  type        ProductType
+  isActive    Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products")
+}
+
+// ------------------ Journey------------
+
+model CampaignJourney {
+  id          String   @id @default(uuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  imageId     String?
+  title       String
+  description String
+  order       Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@map("campaign_journeys")
+}
+
+// ------------Testimonial ---------------
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  imageId     String?
+  name        String
+  designation String?
+  description String
+
+  createdAt DateTime @default(now())
+
+  @@map("testimonials")
+}
+
+// ---------------Updates --------------
+
+model Update {
+  id         String    @id @default(uuid())
+  campaignId String
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  title      String
+  content    Json       // TipTap JSON
+  glimpses   Glimpse[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("updates")
+}
+
+// -------------------Glimps --------------
+
+model Glimpse {
+  id       String         @id @default(uuid())
+  updateId String
+  update   Update         @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  order    Int            @default(0)
+  images   GlimpseImage[]
+
+  createdAt DateTime @default(now())
+
+  @@map("glimpses")
+}
+
+// --------------- Glimps Image--------------
+
+model GlimpseImage {
+  id        String  @id @default(uuid())
+  glimpseId String
+  glimpse   Glimpse @relation(fields: [glimpseId], references: [id], onDelete: Cascade)
+  mediaId   String
+  order     Int     @default(0)
+
+  @@map("glimpse_images")
+}
+
+// ---------- DONATIONS (replaces generic Payment) ----------
+
+enum DonationStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Donation {
+  id                String         @id @default(uuid())
+  campaignId        String
+  campaign          Campaign       @relation(fields: [campaignId], references: [id])
+  customerId        String
+  customer          Customer       @relation(fields: [customerId], references: [id])
+
+  amount            Int            // paise, excluding tip
+  tipAmount         Int            @default(0)
+  message           String?
+  isAnonymous        Boolean        @default(false)
+
+  razorpayOrderId   String         @unique
+  razorpayPaymentId String?
+  status            DonationStatus @default(CREATED)
+  paymentMetadata   Json?          // raw gateway response, for the detail modal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([customerId])
+  @@index([status])
+  @@map("donations")
 }

@@ -11,8 +11,9 @@ import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AiModule } from './modules/ai/ai.module';
 import { RolesModule } from './modules/roles/roles.module';
-import { PaymentsModule } from './modules/payments/payments.module';
 import { CustomerAuthModule } from './modules/customer-auth/customer-auth.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { NgoModule } from './modules/ngos/ngo.module';
 
 @Module({
   imports: [
@@ -23,8 +24,9 @@ import { CustomerAuthModule } from './modules/customer-auth/customer-auth.module
     AuditLogsModule,
     AiModule,
     RolesModule,
-    PaymentsModule,
     CustomerAuthModule,
+    CategoriesModule,
+    NgoModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

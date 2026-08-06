@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Get,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { CustomerAuthService } from './customer-auth.service';
@@ -14,6 +15,7 @@ import { RegisterDto } from './dto/register.dto';
 import { CustomerLoginDto } from './dto/login.dto';
 import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('customer-auth')
 export class CustomerAuthController {
@@ -67,6 +69,7 @@ export class CustomerAuthController {
     return { accessToken };
   }
 
+  @Public()
   @Post('logout')
   @UseGuards(CustomerJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -75,5 +78,12 @@ export class CustomerAuthController {
     if (token) await this.authService.logout(token);
     res.clearCookie('customerRefreshToken');
     return { message: 'Logged out' };
+  }
+
+  @Public()
+  @Get('me')
+  @UseGuards(CustomerJwtAuthGuard)
+  getMe(@CurrentUser() user: any) {
+    return user; // { customerId, email }
   }
 }

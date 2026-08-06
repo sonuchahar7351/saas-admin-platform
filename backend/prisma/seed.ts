@@ -26,6 +26,12 @@ async function main() {
     { resource: 'users', action: 'read' },
     { resource: 'users', action: 'write' },
     { resource: 'users', action: 'delete' },
+    { resource: 'categories', action: 'read' },
+    { resource: 'categories', action: 'write' },
+    { resource: 'categories', action: 'delete' },
+    { resource: 'ngos', action: 'read' },
+    { resource: 'ngos', action: 'write' },
+    { resource: 'ngos', action: 'delete' },
   ];
 
   for (const p of permissions) {
@@ -52,23 +58,25 @@ async function main() {
   }
 
   // Admin gets read-only access to users (their own records, enforced at repository level)
-  const usersReadPermission = await prisma.permission.findUnique({
-    where: { resource_action: { resource: 'users', action: 'read' } },
+  const usersReadPermission = await prisma.permission.findMany({
+    where: {
+      action: 'read',
+      resource: { in: ['users', 'categories', 'ngos'] },
+    },
   });
 
   const adminRole = await prisma.role.findUnique({ where: { name: 'ADMIN' } });
 
   if (usersReadPermission && adminRole) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: adminRole.id,
-          permissionId: usersReadPermission.id,
+    for (const perm of usersReadPermission) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id },
         },
-      },
-      update: {},
-      create: { roleId: adminRole.id, permissionId: usersReadPermission.id },
-    });
+        update: {},
+        create: { roleId: adminRole.id, permissionId: perm.id },
+      });
+    }
   }
 
   const hashedPassword = await bcrypt.hash('ChangeMe123!', 10);
