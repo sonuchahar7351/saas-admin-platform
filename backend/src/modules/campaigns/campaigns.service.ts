@@ -13,7 +13,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   CREATED: ['ACTIVE', 'DELETED'],
   ACTIVE: ['COMPLETED', 'DELETED'],
   COMPLETED: ['DELETED'],
-  DELETED: [], // terminal state
+  DELETED: ['ACTIVE'], // terminal state
 };
 
 @Injectable()

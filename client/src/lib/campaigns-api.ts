@@ -13,6 +13,20 @@ export interface CampaignRecord {
   createdAt: string;
 }
 
+export interface CreateCampaignPayload {
+  title: string;
+  slug?: string;
+  ngoId: string;
+  categoryId: string;
+  goalAmount: number;
+  shortDescription: string;
+  cardImageId?: string;
+  story: any;
+  expiryDate: string;
+  donationPresets: { amount: number; isDefault: boolean }[];
+  tipPresets: { percentage: number; isDefault: boolean }[];
+}
+
 export const campaignsApi = {
   getAll: (params?: { status?: string; categoryId?: string }) =>
     apiClient.get<CampaignRecord[]>("/campaigns", { params }),
@@ -21,4 +35,5 @@ export const campaignsApi = {
     apiClient.patch(`/campaigns/${id}/status`, { status }),
   duplicate: (id: string) => apiClient.post(`/campaigns/${id}/duplicate`),
   delete: (id: string) => apiClient.delete(`/campaigns/${id}`),
+  create: (data: CreateCampaignPayload) => apiClient.post("/campaigns", data),
 };

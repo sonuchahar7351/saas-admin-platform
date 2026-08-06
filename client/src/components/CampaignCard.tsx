@@ -22,7 +22,7 @@ const NEXT_STATUS: Record<string, string[]> = {
   CREATED: ["ACTIVE", "DELETED"],
   ACTIVE: ["COMPLETED", "DELETED"],
   COMPLETED: ["DELETED"],
-  DELETED: [],
+  DELETED: ["ACTIVE"],
 };
 
 export function CampaignCard({
