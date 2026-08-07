@@ -42,4 +42,10 @@ export class MediaController {
   delete(@Param('id') id: string) {
     return this.service.delete(id);
   }
+
+  @RequirePermission('media', 'read')
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findById(id);
+  }
 }

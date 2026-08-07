@@ -16,14 +16,16 @@ import { useRef } from "react";
 import { EditorToolbar } from "./EditorToolbar";
 import { Callout } from "../../lib/tiptap/callout-extension";
 import { mediaApi } from "../../lib/media-api";
+import { forwardRef, useImperativeHandle } from "react";
 
-export function RichEditor({
-  content,
-  onChange,
-}: {
-  content: any;
-  onChange: (json: any) => void;
-}) {
+export interface RichEditorHandle {
+  setContent: (json: any) => void;
+}
+
+export const RichEditor = forwardRef<
+  RichEditorHandle,
+  { content: any; onChange: (json: any) => void }
+>(function RichEditor({ content, onChange }, ref) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -45,6 +47,12 @@ export function RichEditor({
     onUpdate: ({ editor }) => onChange(editor.getJSON()),
     immediatelyRender: false, // avoids Next.js SSR hydration mismatch — TipTap's docs flag this explicitly for App Router
   });
+
+  useImperativeHandle(ref, () => ({
+    setContent: (json: any) => {
+      editor?.commands.setContent(json);
+    },
+  }));
 
   const handleImageUpload = async (file: File) => {
     if (!editor) return;
@@ -76,4 +84,4 @@ export function RichEditor({
       <EditorContent editor={editor} />
     </div>
   );
-}
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { mediaApi } from "../lib/media-api";
 
@@ -8,16 +8,23 @@ export function ImageUploadField({
   label,
   category,
   mediaId,
+  initialUrl,
   onChange,
 }: {
   label: string;
   category: string;
+  initialUrl?: string | null;
   mediaId: string | null;
   onChange: (mediaId: string | null, previewUrl: string | null) => void;
 }) {
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialUrl || null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // keep preview in sync if the parent loads data asynchronously (edit mode)
+  useEffect(() => {
+    if (initialUrl && !preview) setPreview(initialUrl);
+  }, [initialUrl]);
 
   const handleFile = async (file: File) => {
     setUploading(true);

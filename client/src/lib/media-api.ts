@@ -9,4 +9,7 @@ export const mediaApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+
+  getById: (id: string) =>
+    apiClient.get<{ id: string; url: string }>(`/media/${id}`),
 };

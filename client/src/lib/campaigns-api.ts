@@ -27,13 +27,26 @@ export interface CreateCampaignPayload {
   tipPresets: { percentage: number; isDefault: boolean }[];
 }
 
+export interface CampaignDetail extends CampaignRecord {
+  ngoId: string;
+  categoryId: string;
+  goalAmount: number;
+  shortDescription: string;
+  story: any;
+  donationPresets: { amount: number; isDefault: boolean }[];
+  tipPresets: { percentage: number; isDefault: boolean }[];
+}
+
 export const campaignsApi = {
   getAll: (params?: { status?: string; categoryId?: string }) =>
     apiClient.get<CampaignRecord[]>("/campaigns", { params }),
-  getById: (id: string) => apiClient.get<CampaignRecord>(`/campaigns/${id}`),
   changeStatus: (id: string, status: string) =>
     apiClient.patch(`/campaigns/${id}/status`, { status }),
   duplicate: (id: string) => apiClient.post(`/campaigns/${id}/duplicate`),
   delete: (id: string) => apiClient.delete(`/campaigns/${id}`),
   create: (data: CreateCampaignPayload) => apiClient.post("/campaigns", data),
+  // add to campaignsApi:
+  getById: (id: string) => apiClient.get<CampaignDetail>(`/campaigns/${id}`),
+  update: (id: string, data: Partial<CreateCampaignPayload>) =>
+    apiClient.patch(`/campaigns/${id}`, data),
 };

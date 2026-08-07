@@ -32,4 +32,10 @@ export class MediaService {
     await this.s3.delete(media.key);
     return this.repo.delete(id);
   }
+
+  async findById(id: string) {
+    const media = await this.repo.findById(id);
+    if (!media) throw new NotFoundException('Media not found');
+    return media;
+  }
 }
