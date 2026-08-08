@@ -18,6 +18,7 @@ import { MediaModule } from './modules/media/media.module';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { DonationsModule } from './modules/donations/donations.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     CampaignsModule,
     DonationsModule,
     AnalyticsModule,
+    ProductsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

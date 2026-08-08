@@ -7,6 +7,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
   imports: [AuditLogsModule],
+  exports: [AiService],
   controllers: [AiController],
   providers: [AiService, OpenAIProvider, GeminiProvider],
 })

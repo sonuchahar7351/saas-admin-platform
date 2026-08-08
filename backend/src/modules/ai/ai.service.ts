@@ -48,4 +48,37 @@ export class AiService {
 
     return this.generateText(prompt);
   }
+
+  async generateProduct(input: {
+    campaignTitle: string;
+    categoryName: string;
+  }): Promise<{
+    title: string;
+    description: string;
+    amount: number;
+    priority: number;
+    suggestedImagePrompt: string;
+  }> {
+    const prompt = `Suggest a donation product/reward tier for a crowdfunding campaign.
+
+Campaign: ${input.campaignTitle}
+Category: ${input.categoryName}
+
+Respond ONLY with valid JSON, no markdown, no explanation, in this exact shape:
+{"title": "...", "description": "...", "amount": 500, "priority": 1, "suggestedImagePrompt": "..."}
+
+- title: short, specific product/reward name
+- description: one or two sentences
+- amount: a reasonable rupee value as an integer
+- priority: an integer 1-10 for display ordering
+- suggestedImagePrompt: a short visual description someone could use to generate or source an image for this`;
+
+    const raw = await this.generateText(prompt);
+    try {
+      const cleaned = raw.replace(/```json|```/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch {
+      throw new Error('AI returned an unexpected format. Try again.');
+    }
+  }
 }
