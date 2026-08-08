@@ -1,34 +1,50 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
-import { CreateAnalyticsDto } from './dto/create-analytics.dto';
-import { UpdateAnalyticsDto } from './dto/update-analytics.dto';
+import { RequirePermission } from '../../common/decorators/permission.decorator';
 
 @Controller('analytics')
+@RequirePermission('analytics', 'read')
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(private service: AnalyticsService) {}
 
-  @Post()
-  create(@Body() createAnalyticsDto: CreateAnalyticsDto) {
-    return this.analyticsService.create(createAnalyticsDto);
+  @Get('summary')
+  getSummary() {
+    return this.service.getSummaryCards();
   }
 
-  @Get()
-  findAll() {
-    return this.analyticsService.findAll();
+  @Get('donation-trend')
+  getDonationTrend(
+    @Query('period') period: 'day' | 'week' | 'month' | 'year' = 'day',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.service.getDonationTrend(period, startDate, endDate);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.analyticsService.findOne(+id);
+  @Get('top-campaigns')
+  getTopCampaigns(@Query('limit') limit?: string) {
+    return this.service.getTopCampaigns(limit ? Number(limit) : undefined);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAnalyticsDto: UpdateAnalyticsDto) {
-    return this.analyticsService.update(+id, updateAnalyticsDto);
+  @Get('category-distribution')
+  getCategoryDistribution() {
+    return this.service.getCategoryDistribution();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.analyticsService.remove(+id);
+  @Get('payment-status')
+  getPaymentStatus() {
+    return this.service.getPaymentStatusBreakdown();
+  }
+
+  @Get('heatmap')
+  getHeatmap() {
+    return this.service.getDonationHeatmap();
+  }
+
+  @Get('latest-transactions')
+  getLatestTransactions(@Query('limit') limit?: string) {
+    return this.service.getLatestTransactions(
+      limit ? Number(limit) : undefined,
+    );
   }
 }

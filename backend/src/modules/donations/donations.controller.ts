@@ -8,12 +8,17 @@ import {
   HttpCode,
   BadRequestException,
   UseGuards,
+  Query,
+  Param,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { DonationsService } from './donations.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guard';
 import { CreateDonationOrderDto } from './dto/create-donation-order.dto';
+import { RequirePermission } from '../../common/decorators/permission.decorator';
+import { QueryDonationsDto } from './dto/query-donations.dto';
+import { Roles } from '../../common/decorators/role.decorator';
 
 @Controller('donations')
 export class DonationsController {
@@ -48,5 +53,23 @@ export class DonationsController {
     }
     await this.service.handleWebhookEvent(JSON.parse(rawBody.toString()));
     return { received: true };
+  }
+
+  @RequirePermission('donations', 'read')
+  @Get()
+  findAllAdmin(@Query() query: QueryDonationsDto) {
+    return this.service.findAllAdmin(query);
+  }
+
+  @RequirePermission('donations', 'read')
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findByIdAdmin(id);
+  }
+
+  @Roles('SUPER_ADMIN') // matches your spec: refund is Super Admin only, Admin explicitly cannot
+  @Post(':id/refund')
+  refund(@Param('id') id: string) {
+    return this.service.refund(id);
   }
 }

@@ -50,4 +50,9 @@ export const navItems: NavItem[] = [
     href: "/dashboard/media",
     roles: ["SUPER_ADMIN", "SUB_ADMIN"],
   },
+  {
+    label: "Transactions",
+    href: "/dashboard/transactions",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
 ];

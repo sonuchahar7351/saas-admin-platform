@@ -2,9 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import * as express from 'express';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // this is the missing piece — actually applies @Type() conversions
+      whitelist: true, // bonus: strips any properties not declared in the DTO
+    }),
+  );
 
   app.use(
     express.json({

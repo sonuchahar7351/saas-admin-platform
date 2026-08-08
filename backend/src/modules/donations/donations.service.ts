@@ -1,8 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import Razorpay from 'razorpay';
 import * as crypto from 'crypto';
 import { DonationsRepository } from './donations.repository';
 import { CreateDonationOrderDto } from './dto/create-donation-order.dto';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { QueryDonationsDto } from './dto/query-donations.dto';
 
 @Injectable()
 export class DonationsService {
@@ -85,5 +87,55 @@ export class DonationsService {
 
   getMyDonations(customerId: string) {
     return this.repo.findByCustomer(customerId);
+  }
+
+  async findAllAdmin(query: QueryDonationsDto) {
+    const [data, total] = await this.repo.findAllAdmin(query);
+    return {
+      data,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
+  }
+
+  async findByIdAdmin(id: string) {
+    const donation = await this.repo.findByIdAdmin(id);
+    if (!donation) throw new NotFoundException('Donation not found');
+    return donation;
+  }
+
+  async refund(id: string) {
+    const donation = await this.repo.findByIdAdmin(id);
+    if (!donation) throw new NotFoundException('Donation not found');
+    if (donation.status !== 'PAID') {
+      throw new BadRequestException(
+        `Only PAID donations can be refunded. Current status: ${donation.status}`,
+      );
+    }
+    if (!donation.razorpayPaymentId) {
+      throw new BadRequestException(
+        'No payment ID on record for this donation',
+      );
+    }
+
+    await this.razorpay.payments.refund(donation.razorpayPaymentId, {
+      amount: donation.amount + donation.tipAmount,
+    });
+
+    // Note: Razorpay also sends a `refund.processed` webhook — in a full production build,
+    // the DEFINITIVE status update should happen there (same reasoning as payment.captured:
+    // never trust the synchronous API response alone as the source of truth). Updating here
+    // too gives immediate UI feedback; the webhook is the authoritative confirmation.
+    await this.repo.updateStatus(donation.razorpayOrderId, {
+      status: 'REFUNDED',
+    });
+    await this.repo.incrementCampaignRaised(
+      donation.campaignId,
+      -donation.amount,
+    );
+
+    return { message: 'Refund initiated' };
   }
 }

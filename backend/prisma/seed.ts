@@ -38,6 +38,7 @@ async function main() {
     { resource: 'campaigns', action: 'read' },
     { resource: 'campaigns', action: 'write' },
     { resource: 'campaigns', action: 'delete' },
+    { resource: 'analytics', action: 'read' },
   ];
 
   for (const p of permissions) {
@@ -67,7 +68,9 @@ async function main() {
   const usersReadPermission = await prisma.permission.findMany({
     where: {
       action: 'read',
-      resource: { in: ['users', 'categories', 'ngos', 'media', 'campaigns'] },
+      resource: {
+        in: ['users', 'categories', 'ngos', 'media', 'campaigns', 'analytics'],
+      },
     },
   });
 
