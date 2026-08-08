@@ -23,6 +23,7 @@ export class CustomerJwtStrategy extends PassportStrategy(
       where: { id: payload.sub },
       select: { id: true, email: true, name: true },
     });
-    return customer;
+    if (!customer) return null;
+    return { ...customer, customerId: customer?.id }; // customerId alias for controllers expecting it
   }
 }

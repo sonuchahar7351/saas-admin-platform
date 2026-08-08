@@ -19,11 +19,27 @@ export class MediaRepository {
     return this.prisma.media.findUnique({ where: { id } });
   }
 
-  findAll(category?: string) {
+  findAll(category?: string, search?: string) {
     return this.prisma.media.findMany({
-      where: category ? { category: category as any } : {},
+      where: {
+        ...(category && { category: category as any }),
+        ...(search && {
+          OR: [
+            { key: { contains: search, mode: 'insensitive' } },
+            { tags: { has: search } },
+          ],
+        }),
+      },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  findByIds(ids: string[]) {
+    return this.prisma.media.findMany({ where: { id: { in: ids } } });
+  }
+
+  deleteMany(ids: string[]) {
+    return this.prisma.media.deleteMany({ where: { id: { in: ids } } });
   }
 
   delete(id: string) {

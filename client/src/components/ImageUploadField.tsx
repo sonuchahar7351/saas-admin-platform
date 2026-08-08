@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, Images } from "lucide-react";
 import { mediaApi } from "../lib/media-api";
+import { MediaPickerModal } from "./media/MediaPickerModal";
 
 export function ImageUploadField({
   label,
@@ -19,6 +20,7 @@ export function ImageUploadField({
 }) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(initialUrl || null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // keep preview in sync if the parent loads data asynchronously (edit mode)
@@ -73,15 +75,34 @@ export function ImageUploadField({
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex h-32 w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-text-secondary hover:border-accent hover:text-accent"
-        >
-          <Upload size={18} />
-          <span className="text-xs">Click to upload</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex h-32 flex-1 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-text-secondary hover:border-accent hover:text-accent"
+          >
+            <Upload size={18} />
+            <span className="text-xs">Upload new</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="flex h-32 flex-1 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-text-secondary hover:border-accent hover:text-accent"
+          >
+            <Images size={18} />
+            <span className="text-xs">Choose existing</span>
+          </button>
+        </div>
       )}
+      <MediaPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        defaultCategory={category}
+        onSelect={([item]) => {
+          setPreview(item.url);
+          onChange(item.id, item.url);
+        }}
+      />
     </div>
   );
 }

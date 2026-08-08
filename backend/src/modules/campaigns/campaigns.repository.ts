@@ -24,7 +24,10 @@ export class CampaignsRepository {
   }
 
   findBySlug(slug: string) {
-    return this.prisma.campaign.findUnique({ where: { slug } });
+    return this.prisma.campaign.findUnique({
+      where: { slug },
+      include: { category: true, ngo: true },
+    });
   }
 
   slugExists(slug: string) {

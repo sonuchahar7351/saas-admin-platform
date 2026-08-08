@@ -8,13 +8,15 @@ import {
   Body,
   UploadedFile,
   UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
 import type { MulterFile } from '../../common/types/multer-file.type';
+import { BulkDeleteDto } from './dto/bulk-delete.dto';
 
 @Controller('media')
 export class MediaController {
@@ -33,8 +35,11 @@ export class MediaController {
 
   @RequirePermission('media', 'read')
   @Get()
-  findAll(@Query('category') category?: string) {
-    return this.service.findAll(category);
+  findAll(
+    @Query('category') category?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.service.findAll(category, search);
   }
 
   @RequirePermission('media', 'delete')
@@ -47,5 +52,22 @@ export class MediaController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findById(id);
+  }
+
+  @RequirePermission('media', 'write')
+  @Post('bulk-upload')
+  @UseInterceptors(FilesInterceptor('files', 20))
+  bulkUpload(
+    @UploadedFiles() files: MulterFile[],
+    @Body() dto: UploadMediaDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.service.bulkUpload(files, dto, user.userId);
+  }
+
+  @RequirePermission('media', 'delete')
+  @Post('bulk-delete')
+  bulkDelete(@Body() dto: BulkDeleteDto) {
+    return this.service.bulkDelete(dto.ids);
   }
 }

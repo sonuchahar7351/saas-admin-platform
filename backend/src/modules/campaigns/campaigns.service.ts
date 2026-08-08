@@ -7,6 +7,7 @@ import {
 import { CampaignsRepository } from './campaigns.repository';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
+import { MediaRepository } from '../media/media.repository';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -18,10 +19,45 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 
 @Injectable()
 export class CampaignsService {
-  constructor(private repo: CampaignsRepository) {}
+  constructor(
+    private repo: CampaignsRepository,
+    private mediaRepo: MediaRepository,
+  ) {}
 
-  findAll(filters: { status?: string; categoryId?: string }) {
-    return this.repo.findAll(filters);
+  private async attachImageUrls(campaigns: any[]) {
+    const imageIds = campaigns
+      .map((c) => c.cardImageId)
+      .filter(Boolean) as string[];
+    if (imageIds.length === 0) {
+      return campaigns.map((c) => ({ ...c, cardImageUrl: null }));
+    }
+
+    const mediaItems = await this.mediaRepo.findByIds(imageIds);
+    const urlById = new Map(mediaItems.map((m) => [m.id, m.url]));
+
+    return campaigns.map((c) => ({
+      ...c,
+      cardImageUrl: c.cardImageId ? urlById.get(c.cardImageId) || null : null,
+    }));
+  }
+
+  async findPublicBySlug(slug: string) {
+    const campaign = await this.repo.findBySlug(slug);
+    if (
+      !campaign ||
+      (campaign.status !== 'ACTIVE' && campaign.status !== 'COMPLETED')
+    ) {
+      return null;
+    }
+    const cardImage = campaign.cardImageId
+      ? await this.mediaRepo.findById(campaign.cardImageId)
+      : null;
+    return { ...campaign, cardImageUrl: cardImage?.url || null };
+  }
+
+  async findAll(filters: { status?: string; categoryId?: string }) {
+    const campiangs = await this.repo.findAll(filters);
+    return this.attachImageUrls(campiangs);
   }
 
   async findById(id: string) {

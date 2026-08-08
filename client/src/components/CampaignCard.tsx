@@ -56,7 +56,17 @@ export function CampaignCard({
       <div className="relative h-36 bg-[#F1F2F4]">
         {/* image renders once media URLs are wired through — placeholder for now */}
         <div className="flex h-full items-center justify-center text-xs text-text-secondary">
-          {campaign.cardImageId ? "Image" : "No image"}
+          {campaign.cardImageUrl ? (
+            <img
+              src={campaign.cardImageUrl}
+              alt={campaign.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-text-muted">
+              No image
+            </div>
+          )}
         </div>
         <div className="absolute right-2 top-2">
           <CampaignStatusBadge status={campaign.status} />

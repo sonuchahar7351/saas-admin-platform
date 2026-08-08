@@ -22,8 +22,24 @@ export class MediaService {
     });
   }
 
-  findAll(category?: string) {
-    return this.repo.findAll(category);
+  async bulkUpload(
+    files: MulterFile[],
+    dto: UploadMediaDto,
+    uploadedById: string,
+  ) {
+    return Promise.all(
+      files.map((file) => this.upload(file, dto, uploadedById)),
+    );
+  }
+
+  async bulkDelete(ids: string[]) {
+    const items = await this.repo.findByIds(ids);
+    await Promise.all(items.map((m) => this.s3.delete(m.key)));
+    return this.repo.deleteMany(ids);
+  }
+
+  findAll(category?: string, search?: string) {
+    return this.repo.findAll(category, search);
   }
 
   async delete(id: string) {

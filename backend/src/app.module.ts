@@ -16,6 +16,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { NgoModule } from './modules/ngos/ngo.module';
 import { MediaModule } from './modules/media/media.module';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
+import { DonationsModule } from './modules/donations/donations.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { CampaignsModule } from './modules/campaigns/campaigns.module';
     NgoModule,
     MediaModule,
     CampaignsModule,
+    DonationsModule,
+    AnalyticsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

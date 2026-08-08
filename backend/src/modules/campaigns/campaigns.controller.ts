@@ -30,10 +30,7 @@ export class CampaignsController {
   @Public()
   @Get('public/:slug')
   findPublicBySlug(@Param('slug') slug: string) {
-    return this.service
-      .findAll({})
-      .then((all) => all.find((c) => c.slug === slug));
-    // (simple for now — we'll optimize with a direct findBySlug when we build the frontend page)
+    return this.service.findPublicBySlug(slug);
   }
 
   @RequirePermission('campaigns', 'read')

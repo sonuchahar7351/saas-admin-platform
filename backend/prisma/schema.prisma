@@ -234,6 +234,8 @@ model Campaign {
   donationPresets  Json           // [{ amount: 1000, isDefault: true }, ...]
   tipPresets       Json           // [{ percentage: 7, isDefault: true }, ...]
 
+  raisedAmount      Int @default(0) // paise — incremented on each successful donation, not computed live
+
   createdById      String
   createdBy        User           @relation(fields: [createdById], references: [id])
 

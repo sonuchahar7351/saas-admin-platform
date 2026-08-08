@@ -8,6 +8,7 @@ export interface CampaignRecord {
   expiryDate: string;
   status: "CREATED" | "ACTIVE" | "COMPLETED" | "DELETED";
   cardImageId: string | null;
+  cardImageUrl: string | null;
   category: { id: string; name: string };
   ngo: { id: string; name: string };
   createdAt: string;

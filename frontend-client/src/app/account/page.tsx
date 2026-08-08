@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { paymentsApi } from "../../lib/payments-api";
+import { paymentsApi } from "../../lib/donations-api";
 import { useCustomerAuthStore } from "../../store/customer-auth-store";
 
 interface PaymentRecord {
