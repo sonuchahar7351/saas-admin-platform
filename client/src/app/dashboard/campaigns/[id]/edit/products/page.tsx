@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Plus, Trash2, Pencil, Sparkles } from "lucide-react";
-import { ProtectedRoute } from "../../../../../components/ProtectedRoute";
-import { productsApi, ProductRecord } from "../../../../../lib/products-api";
-import { campaignsApi } from "../../../../../lib/campaigns-api";
-import { ImageUploadField } from "../../../../../components/ImageUploadField";
+import { ProtectedRoute } from "../../../../../../components/ProtectedRoute";
+import { productsApi, ProductRecord } from "../../../../../../lib/products-api";
+import { campaignsApi } from "../../../../../../lib/campaigns-api";
+import { ImageUploadField } from "../../../../../../components/ImageUploadField";
 
 const TYPES = ["SMALL", "MEDIUM", "MEGA"];
 

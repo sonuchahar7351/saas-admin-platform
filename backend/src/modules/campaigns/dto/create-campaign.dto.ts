@@ -6,6 +6,7 @@ import {
   Min,
   IsDateString,
   IsArray,
+  IsObject,
 } from 'class-validator';
 
 export class CreateCampaignDto {
@@ -33,6 +34,7 @@ export class CreateCampaignDto {
   @IsUUID()
   cardImageId?: string;
 
+  @IsObject()
   story!: any; // TipTap JSON document — validated structurally, not field-by-field
 
   @IsDateString()

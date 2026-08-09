@@ -25,19 +25,27 @@ export class CampaignsService {
   ) {}
 
   private async attachImageUrls(campaigns: any[]) {
-    const imageIds = campaigns
-      .map((c) => c.cardImageId)
-      .filter(Boolean) as string[];
-    if (imageIds.length === 0) {
-      return campaigns.map((c) => ({ ...c, cardImageUrl: null }));
+    const cardIds = campaigns.map((c) => c.cardImageId).filter(Boolean);
+    const bannerIds = campaigns.flatMap((c) => c.bannerImageIds || []);
+    const allIds = [...new Set([...cardIds, ...bannerIds])];
+
+    if (allIds.length === 0) {
+      return campaigns.map((c) => ({
+        ...c,
+        cardImageUrl: null,
+        bannerImageUrls: [],
+      }));
     }
 
-    const mediaItems = await this.mediaRepo.findByIds(imageIds);
+    const mediaItems = await this.mediaRepo.findByIds(allIds);
     const urlById = new Map(mediaItems.map((m) => [m.id, m.url]));
 
     return campaigns.map((c) => ({
       ...c,
       cardImageUrl: c.cardImageId ? urlById.get(c.cardImageId) || null : null,
+      bannerImageUrls: (c.bannerImageIds || [])
+        .map((id: string) => urlById.get(id))
+        .filter(Boolean),
     }));
   }
 
@@ -63,7 +71,8 @@ export class CampaignsService {
   async findById(id: string) {
     const campaign = await this.repo.findById(id);
     if (!campaign) throw new NotFoundException('Campaign not found');
-    return campaign;
+    const [withImages] = await this.attachImageUrls([campaign]);
+    return withImages;
   }
 
   private validatePresets(donationPresets: any[], tipPresets: any[]) {

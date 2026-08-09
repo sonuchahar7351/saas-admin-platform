@@ -19,6 +19,9 @@ import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { DonationsModule } from './modules/donations/donations.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ProductsModule } from './modules/products/products.module';
+import { UpdatesModule } from './modules/updates/updates.module';
+import { JourneyModule } from './modules/journey/journey.module';
+import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 
 @Module({
   imports: [
@@ -37,6 +40,9 @@ import { ProductsModule } from './modules/products/products.module';
     DonationsModule,
     AnalyticsModule,
     ProductsModule,
+    UpdatesModule,
+    JourneyModule,
+    TestimonialsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

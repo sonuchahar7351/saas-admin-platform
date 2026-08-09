@@ -81,4 +81,21 @@ Respond ONLY with valid JSON, no markdown, no explanation, in this exact shape:
       throw new Error('AI returned an unexpected format. Try again.');
     }
   }
+
+  async generateUpdate(input: {
+    campaignTitle: string;
+    context: string;
+  }): Promise<string> {
+    const prompt = `Write a short campaign progress update for a crowdfunding platform.
+
+Campaign: ${input.campaignTitle}
+What happened: ${input.context}
+
+Requirements:
+- 2 to 3 short paragraphs, separated by blank lines
+- Warm, appreciative tone toward donors
+- Clear about what progress was made
+- Plain text only, no markdown`;
+    return this.generateText(prompt);
+  }
 }

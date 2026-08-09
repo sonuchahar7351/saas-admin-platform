@@ -244,6 +244,7 @@ model Campaign {
   testimonials Testimonial[]
   updates      Update[]
   donations    Donation[]
+  bannerImageIds String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

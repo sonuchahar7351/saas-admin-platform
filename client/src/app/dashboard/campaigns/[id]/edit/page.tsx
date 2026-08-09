@@ -12,43 +12,39 @@ import { mediaApi } from "../../../../../lib/media-api";
 
 function EditCampaignContent() {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
-
+  const { id } = useParams();
   const [initialValues, setInitialValues] =
     useState<Partial<CampaignFormValues> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const { data: campaign } = await campaignsApi.getById(id);
-
+      const { data: campaign } = await campaignsApi.getById(id as string);
       let cardImageUrl: string | null = null;
       if (campaign.cardImageId) {
         try {
           const { data: media } = await mediaApi.getById(campaign.cardImageId);
           cardImageUrl = media.url;
         } catch {
-          cardImageUrl = null; // media was deleted separately — degrade gracefully, don't block the edit page
+          cardImageUrl = null;
         }
       }
-
       setInitialValues({
         title: campaign.title,
         slug: campaign.slug,
         ngoId: campaign.ngoId,
         categoryId: campaign.categoryId,
-        goalAmount: String(campaign.goalAmount / 100), // paise -> rupees for the input
+        goalAmount: String(campaign.goalAmount / 100),
         shortDescription: campaign.shortDescription,
-        expiryDate: campaign.expiryDate.slice(0, 10), // ISO datetime -> yyyy-mm-dd for <input type="date">
+        expiryDate: campaign.expiryDate.slice(0, 10),
         cardImageId: campaign.cardImageId,
         cardImageUrl,
         story: campaign.story,
-        donationPresets: campaign.donationPresets.map((p) => ({
+        donationPresets: campaign.donationPresets.map((p: any) => ({
           value: p.amount,
           isDefault: p.isDefault,
         })),
-        tipPresets: campaign.tipPresets.map((p) => ({
+        tipPresets: campaign.tipPresets.map((p: any) => ({
           value: p.percentage,
           isDefault: p.isDefault,
         })),
@@ -59,7 +55,7 @@ function EditCampaignContent() {
   }, [id]);
 
   const handleSubmit = async (values: CampaignFormValues) => {
-    await campaignsApi.update(id, {
+    await campaignsApi.update(id as string, {
       title: values.title,
       ngoId: values.ngoId,
       categoryId: values.categoryId,
@@ -77,26 +73,18 @@ function EditCampaignContent() {
         isDefault: p.isDefault,
       })),
     });
-    router.push("/dashboard/campaigns");
+    router.push(`/dashboard/campaigns/${id}/edit`);
   };
 
   if (loading)
     return <p className="text-sm text-text-secondary">Loading campaign…</p>;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="font-display text-2xl font-semibold tracking-tight">
-        Edit campaign
-      </h1>
-      <p className="mt-1 text-sm text-text-secondary">
-        Update campaign details below.
-      </p>
-      <CampaignForm
-        mode="edit"
-        initialValues={initialValues!}
-        onSubmit={handleSubmit}
-      />
-    </div>
+    <CampaignForm
+      mode="edit"
+      initialValues={initialValues!}
+      onSubmit={handleSubmit}
+    />
   );
 }
 

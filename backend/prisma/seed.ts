@@ -42,6 +42,15 @@ async function main() {
     { resource: 'products', action: 'read' },
     { resource: 'products', action: 'write' },
     { resource: 'products', action: 'delete' },
+    { resource: 'updates', action: 'read' },
+    { resource: 'updates', action: 'write' },
+    { resource: 'updates', action: 'delete' },
+    { resource: 'journey', action: 'read' },
+    { resource: 'journey', action: 'write' },
+    { resource: 'journey', action: 'delete' },
+    { resource: 'testimonials', action: 'read' },
+    { resource: 'testimonials', action: 'write' },
+    { resource: 'testimonials', action: 'delete' },
   ];
 
   for (const p of permissions) {
@@ -80,6 +89,9 @@ async function main() {
           'campaigns',
           'analytics',
           'products',
+          'updates',
+          'journey',
+          'testimonials',
         ],
       },
     },
