@@ -9,49 +9,55 @@ import {
 } from "../../../../../components/CampaignForm";
 import { campaignsApi } from "../../../../../lib/campaigns-api";
 import { mediaApi } from "../../../../../lib/media-api";
+import { FeatureCampaignPanel } from "@/components/FeatureCampaignPanel";
 
 function EditCampaignContent() {
   const router = useRouter();
   const { id } = useParams();
   const [initialValues, setInitialValues] =
     useState<Partial<CampaignFormValues> | null>(null);
+  const [rawCampaign, setRawCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      const { data: campaign } = await campaignsApi.getById(id as string);
-      let cardImageUrl: string | null = null;
-      if (campaign.cardImageId) {
-        try {
-          const { data: media } = await mediaApi.getById(campaign.cardImageId);
-          cardImageUrl = media.url;
-        } catch {
-          cardImageUrl = null;
-        }
+  const loadCampaign = async () => {
+    // wrap the existing load logic in a named function so we can call it again after saving
+    const { data: campaign } = await campaignsApi.getById(id as string);
+    setRawCampaign(campaign); // ADD THIS
+
+    let cardImageUrl: string | null = null;
+    if (campaign.cardImageId) {
+      try {
+        const { data: media } = await mediaApi.getById(campaign.cardImageId);
+        cardImageUrl = media.url;
+      } catch {
+        cardImageUrl = null;
       }
-      setInitialValues({
-        title: campaign.title,
-        slug: campaign.slug,
-        ngoId: campaign.ngoId,
-        categoryId: campaign.categoryId,
-        goalAmount: String(campaign.goalAmount / 100),
-        shortDescription: campaign.shortDescription,
-        expiryDate: campaign.expiryDate.slice(0, 10),
-        cardImageId: campaign.cardImageId,
-        cardImageUrl,
-        story: campaign.story,
-        donationPresets: campaign.donationPresets.map((p: any) => ({
-          value: p.amount,
-          isDefault: p.isDefault,
-        })),
-        tipPresets: campaign.tipPresets.map((p: any) => ({
-          value: p.percentage,
-          isDefault: p.isDefault,
-        })),
-      });
-      setLoading(false);
-    };
-    load();
+    }
+    setInitialValues({
+      title: campaign.title,
+      slug: campaign.slug,
+      ngoId: campaign.ngoId,
+      categoryId: campaign.categoryId,
+      goalAmount: String(campaign.goalAmount / 100),
+      shortDescription: campaign.shortDescription,
+      expiryDate: campaign.expiryDate.slice(0, 10),
+      cardImageId: campaign.cardImageId,
+      cardImageUrl,
+      story: campaign.story,
+      donationPresets: campaign.donationPresets.map((p: any) => ({
+        value: p.amount,
+        isDefault: p.isDefault,
+      })),
+      tipPresets: campaign.tipPresets.map((p: any) => ({
+        value: p.percentage,
+        isDefault: p.isDefault,
+      })),
+    });
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadCampaign();
   }, [id]);
 
   const handleSubmit = async (values: CampaignFormValues) => {
@@ -80,11 +86,18 @@ function EditCampaignContent() {
     return <p className="text-sm text-text-secondary">Loading campaign…</p>;
 
   return (
-    <CampaignForm
-      mode="edit"
-      initialValues={initialValues!}
-      onSubmit={handleSubmit}
-    />
+    <>
+      <CampaignForm
+        mode="edit"
+        initialValues={initialValues!}
+        onSubmit={handleSubmit}
+      />
+
+      {/* ADD THIS COMPONENT — sits below the main form, on the same Content tab */}
+      {rawCampaign && (
+        <FeatureCampaignPanel campaign={rawCampaign} onUpdated={loadCampaign} />
+      )}
+    </>
   );
 }
 

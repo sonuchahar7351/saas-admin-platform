@@ -1,6 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('analytics')
 @RequirePermission('analytics', 'read')
@@ -46,5 +47,17 @@ export class AnalyticsController {
     return this.service.getLatestTransactions(
       limit ? Number(limit) : undefined,
     );
+  }
+
+  @Public()
+  @Get('public/stats')
+  async getPublicStats() {
+    const summary = await this.service.getSummaryCards();
+    return {
+      totalRaised: summary.totalDonations,
+      totalCampaigns: summary.totalCampaigns,
+      completedCampaigns: summary.completedCampaigns,
+      totalDonors: summary.totalCustomers,
+    };
   }
 }

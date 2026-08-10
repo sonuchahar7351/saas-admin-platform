@@ -28,6 +28,7 @@ export interface CampaignFormValues {
   cardImageId: string | null;
   cardImageUrl: string | null;
   story: any;
+  isAddress: boolean;
   donationPresets: { value: number; isDefault: boolean }[];
   tipPresets: { value: number; isDefault: boolean }[];
 }
@@ -43,6 +44,7 @@ const DEFAULT_VALUES: CampaignFormValues = {
   cardImageId: null,
   cardImageUrl: null,
   story: { type: "doc", content: [{ type: "paragraph" }] },
+  isAddress: false,
   donationPresets: [
     { value: 1000, isDefault: false },
     { value: 2000, isDefault: true },
@@ -268,6 +270,15 @@ export function CampaignForm({
           onChange={(story) => setForm((f) => ({ ...f, story }))}
         />
       </div>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={form.isAddress || false}
+          onChange={(e) => setForm({ ...form, isAddress: e.target.checked })}
+        />
+        Require full address at checkout (city, state, street)
+      </label>
 
       <PresetEditor
         label="Donation amount presets"

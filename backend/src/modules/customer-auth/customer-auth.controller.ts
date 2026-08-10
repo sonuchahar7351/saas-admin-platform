@@ -16,6 +16,7 @@ import { CustomerLoginDto } from './dto/login.dto';
 import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guard';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot.dto';
 
 @Controller('customer-auth')
 export class CustomerAuthController {
@@ -85,5 +86,19 @@ export class CustomerAuthController {
   @UseGuards(CustomerJwtAuthGuard)
   getMe(@CurrentUser() user: any) {
     return user; // { customerId, email }
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 }

@@ -1,4 +1,4 @@
-import { IsString, IsUUID, IsOptional } from 'class-validator';
+import { IsString, IsUUID, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateTestimonialDto {
   @IsUUID() campaignId!: string;
@@ -13,4 +13,5 @@ export class UpdateTestimonialDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() designation?: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }

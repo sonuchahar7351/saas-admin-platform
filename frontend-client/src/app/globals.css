@@ -3,7 +3,17 @@
 @theme {
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+}
 
+:root,
+[data-theme="light"] {
   --color-bg: #fafaf8;
   --color-surface: #ffffff;
   --color-border: #e8e6e0;
@@ -11,6 +21,24 @@
   --color-text-muted: #706c64;
   --color-accent: #059669;
   --color-accent-hover: #047857;
+}
+
+[data-theme="dark"] {
+  --color-bg: #14161a;
+  --color-surface: #1c1f24;
+  --color-border: #2b2f36;
+  --color-text: #f2f1ec;
+  --color-text-muted: #9a9890;
+  --color-accent: #10b981;
+  --color-accent-hover: #34d399;
+}
+
+html {
+  transition: background-color 0.2s ease;
+}
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 .ProseMirror {

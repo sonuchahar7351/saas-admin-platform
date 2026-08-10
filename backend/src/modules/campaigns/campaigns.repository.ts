@@ -55,4 +55,50 @@ export class CampaignsRepository {
       data: { status: 'DELETED' },
     });
   }
+
+  findPublicPaginated(query: {
+    categoryId?: string;
+    search?: string;
+    status?: string;
+    sortBy?: string;
+    page: number;
+    limit: number;
+  }) {
+    const { categoryId, search, status, sortBy, page, limit } = query;
+
+    const where: any = {
+      status: status ? status : { in: ['ACTIVE', 'COMPLETED'] }, // Explore shows both by default; homepage narrows to ACTIVE
+      ...(categoryId && { categoryId }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { shortDescription: { contains: search, mode: 'insensitive' } },
+          { ngo: { name: { contains: search, mode: 'insensitive' } } },
+          { category: { name: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+    };
+
+    const orderBy =
+      sortBy === 'oldest'
+        ? { createdAt: 'asc' as const }
+        : sortBy === 'mostFunded'
+          ? { raisedAmount: 'desc' as const }
+          : sortBy === 'leastFunded'
+            ? { raisedAmount: 'asc' as const }
+            : sortBy === 'endingSoon'
+              ? { expiryDate: 'asc' as const }
+              : { createdAt: 'desc' as const }; // 'newest' or default
+
+    return Promise.all([
+      this.prisma.campaign.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { category: true, ngo: true },
+      }),
+      this.prisma.campaign.count({ where }),
+    ]);
+  }
 }

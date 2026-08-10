@@ -131,6 +131,8 @@ model Customer {
   isActive      Boolean   @default(true)
   refreshTokens CustomerRefreshToken[]
   donations   Donation[]
+  billings Billing[]
+  passwordResetTokens PasswordResetToken[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -245,6 +247,11 @@ model Campaign {
   updates      Update[]
   donations    Donation[]
   bannerImageIds String[] @default([])
+  isFeatured           Boolean  @default(false)
+  featuredOrder         Int?     // null = not ordered; lower number = higher priority
+  featureImageDesktopId String?
+  featureImageMobileId  String?
+  isAddress             Boolean  @default(false) // whether checkout requires city/state/street
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -275,6 +282,7 @@ model Product {
   amount      Int
   type        ProductType
   isActive    Boolean     @default(true)
+  donationProducts DonationProduct[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -308,6 +316,7 @@ model Testimonial {
   name        String
   designation String?
   description String
+  isActive    Boolean  @default(true)  
 
   createdAt DateTime @default(now())
 
@@ -365,6 +374,11 @@ enum DonationStatus {
   REFUNDED
 }
 
+enum DonationType {
+  AMOUNT
+  PRODUCT
+}
+
 model Donation {
   id                String         @id @default(uuid())
   campaignId        String
@@ -382,6 +396,12 @@ model Donation {
   status            DonationStatus @default(CREATED)
   paymentMetadata   Json?          // raw gateway response, for the detail modal
 
+  billingId    String
+  billing      Billing @relation(fields: [billingId], references: [id])
+  donationType DonationType @default(AMOUNT)
+  products     DonationProduct[]
+  receipt      Receipt?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -389,4 +409,59 @@ model Donation {
   @@index([customerId])
   @@index([status])
   @@map("donations")
+}
+
+
+//--------------------BILLING----------------------
+// Donor/billing identity — separate from Customer, per-donation
+
+model Billing {
+  id            String   @id @default(uuid())
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  donorName     String
+  donorEmail    String
+  pincode       String
+  city          String?
+  state         String?
+  streetAddress String?
+  donations     Donation[]
+  createdAt     DateTime @default(now())
+
+  @@map("billing")
+}
+
+model DonationProduct {
+  id         String   @id @default(uuid())
+  donationId String
+  donation   Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int      @default(1)
+  amount     Int
+
+  @@map("donation_products")
+}
+
+model Receipt {
+  id         String   @id @default(uuid())
+  donationId String   @unique
+  donation   Donation @relation(fields: [donationId], references: [id])
+  pdfUrl     String
+  createdAt  DateTime @default(now())
+
+  @@map("receipts")
+}
+
+
+model PasswordResetToken {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("password_reset_tokens")
 }

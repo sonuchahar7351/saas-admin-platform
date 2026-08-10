@@ -15,8 +15,21 @@ export class TestimonialsService {
     private aiService: AiService,
   ) {}
 
-  async findByCampaign(campaignId: string) {
-    const items = await this.repo.findByCampaign(campaignId);
+  async findAllActive(limit = 6) {
+    const items = await this.repo.findAllActive(limit);
+    const imageIds = items.map((i) => i.imageId).filter(Boolean) as string[];
+    if (imageIds.length === 0)
+      return items.map((i) => ({ ...i, imageUrl: null }));
+    const media = await this.mediaRepo.findByIds(imageIds);
+    const urlById = new Map(media.map((m) => [m.id, m.url]));
+    return items.map((i) => ({
+      ...i,
+      imageUrl: i.imageId ? urlById.get(i.imageId) || null : null,
+    }));
+  }
+
+  async findByCampaign(campaignId: string, onlyActive = false) {
+    const items = await this.repo.findByCampaign(campaignId, onlyActive);
     const imageIds = items.map((i) => i.imageId).filter(Boolean) as string[];
     if (imageIds.length === 0)
       return items.map((i) => ({ ...i, imageUrl: null }));

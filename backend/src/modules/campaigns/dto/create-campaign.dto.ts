@@ -7,6 +7,7 @@ import {
   IsDateString,
   IsArray,
   IsObject,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateCampaignDto {
@@ -45,4 +46,6 @@ export class CreateCampaignDto {
 
   @IsArray()
   tipPresets!: { percentage: number; isDefault: boolean }[];
+
+  @IsOptional() @IsBoolean() isAddress?: boolean;
 }

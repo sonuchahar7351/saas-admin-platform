@@ -1,6 +1,8 @@
 import { Space_Grotesk, Inter } from "next/font/google";
 import { CustomerAuthProvider } from "../components/CustomerAuthProvider";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { SiteHeader } from "@/components/SiteHeader";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -16,7 +18,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <body className="font-body bg-bg text-text">
-        <CustomerAuthProvider>{children}</CustomerAuthProvider>
+        <CustomerAuthProvider>
+          <ThemeProvider>
+            <SiteHeader />
+            {children}
+          </ThemeProvider>
+        </CustomerAuthProvider>
       </body>
     </html>
   );

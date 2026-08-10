@@ -8,12 +8,15 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { CustomerLoginDto } from './dto/login.dto';
+import * as crypto from 'crypto';
+import { EmailService } from './email.service';
 
 @Injectable()
 export class CustomerAuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -107,5 +110,75 @@ export class CustomerAuthService {
     await this.prisma.customerRefreshToken.deleteMany({
       where: { token: refreshToken },
     });
+  }
+
+  // constructor now also takes: private emailService: EmailService
+
+  async forgotPassword(email: string) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { email },
+    });
+
+    if (customer) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
+
+      await this.prisma.passwordResetToken.create({
+        data: {
+          customerId: customer.id,
+          tokenHash,
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+        },
+      });
+
+      const resetLink = `${process.env.FRONTEND_RESET_URL}?token=${rawToken}`;
+      await this.emailService.sendPasswordResetEmail(customer.email, resetLink);
+    }
+
+    // identical response whether or not the email exists — prevents account enumeration
+    return {
+      message:
+        'If an account exists for this email, a reset link has been sent.',
+    };
+  }
+
+  async resetPassword(rawToken: string, newPassword: string) {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (!record || record.used || record.expiresAt < new Date()) {
+      throw new UnauthorizedException(
+        'This reset link is invalid or has expired.',
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.$transaction([
+      this.prisma.customer.update({
+        where: { id: record.customerId },
+        data: { password: hashedPassword },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { used: true },
+      }),
+      // also revoke all existing refresh tokens — a password reset should log out every other session
+      this.prisma.customerRefreshToken.deleteMany({
+        where: { customerId: record.customerId },
+      }),
+    ]);
+
+    return {
+      message:
+        'Password reset successfully. Please log in with your new password.',
+    };
   }
 }

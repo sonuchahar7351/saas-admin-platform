@@ -12,6 +12,10 @@ export interface CampaignRecord {
   category: { id: string; name: string };
   ngo: { id: string; name: string };
   createdAt: string;
+  featureImageDesktopUrl?: string | null;
+  featureImageMobileUrl?: string | null;
+  featuredOrder?: number;
+  isFeatured?: boolean;
 }
 
 export interface CreateCampaignPayload {
@@ -50,4 +54,14 @@ export const campaignsApi = {
   getById: (id: string) => apiClient.get<CampaignDetail>(`/campaigns/${id}`),
   update: (id: string, data: Partial<CreateCampaignPayload>) =>
     apiClient.patch(`/campaigns/${id}`, data),
+  setFeatured: (
+    id: string,
+    data: {
+      isFeatured: boolean;
+      featuredOrder?: number;
+      featureImageDesktopId?: string;
+      featureImageMobileId?: string;
+    },
+  ) => apiClient.patch(`/campaigns/${id}/feature`, data),
+  getFeatured: () => apiClient.get("/campaigns/public/featured"),
 };

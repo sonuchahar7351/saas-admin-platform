@@ -15,20 +15,23 @@ import type { Request } from 'express';
 import { DonationsService } from './donations.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guard';
-import { CreateDonationOrderDto } from './dto/create-donation-order.dto';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
 import { QueryDonationsDto } from './dto/query-donations.dto';
 import { Roles } from '../../common/decorators/role.decorator';
+import { OptionalCustomerAuthGuard } from '../../common/gaurds/optional-customer-auth.guard';
+import { CreateDonationDto } from './dto/create-donation-order.dto';
+import { VerifyDonationDto } from './dto/verify-donation.dto';
 
 @Controller('donations')
 export class DonationsController {
   constructor(private service: DonationsService) {}
 
   @Public()
-  @UseGuards(CustomerJwtAuthGuard)
+  @UseGuards(OptionalCustomerAuthGuard)
   @Post('create-order')
-  createOrder(@Body() dto: CreateDonationOrderDto, @Req() req: any) {
-    return this.service.createOrder(req.user.customerId, dto);
+  createOrder(@Body() dto: CreateDonationDto, @Req() req: any) {
+    const authenticatedCustomerId = req.user?.customerId || null;
+    return this.service.createOrder(dto, authenticatedCustomerId);
   }
 
   @Public()
@@ -46,6 +49,7 @@ export class DonationsController {
     @Headers('x-razorpay-signature') signature: string,
   ) {
     const rawBody = (req as any).rawBody;
+
     if (!rawBody || !signature)
       throw new BadRequestException('Missing signature or body');
     if (!this.service.verifyWebhookSignature(rawBody, signature)) {
@@ -55,10 +59,23 @@ export class DonationsController {
     return { received: true };
   }
 
+  @Public()
+  @Post('verify')
+  @HttpCode(200)
+  async verifyPayment(@Body() dto: VerifyDonationDto) {
+    return this.service.verifyPayment(dto);
+  }
+
   @RequirePermission('donations', 'read')
   @Get()
   findAllAdmin(@Query() query: QueryDonationsDto) {
     return this.service.findAllAdmin(query);
+  }
+
+  @Public()
+  @Get('public/campaign/:campaignId/donors')
+  getCampaignDonors(@Param('campaignId') campaignId: string) {
+    return this.service.getCampaignDonors(campaignId);
   }
 
   @RequirePermission('donations', 'read')

@@ -21,9 +21,15 @@ export class TestimonialsController {
   constructor(private service: TestimonialsService) {}
 
   @Public()
+  @Get('public/homepage')
+  findForHomepage(@Query('limit') limit?: string) {
+    return this.service.findAllActive(limit ? Number(limit) : undefined);
+  }
+
+  @Public()
   @Get('public')
   findPublic(@Query('campaignId') campaignId: string) {
-    return this.service.findByCampaign(campaignId);
+    return this.service.findByCampaign(campaignId, true); // onlyActive = true
   }
 
   @RequirePermission('testimonials', 'read')

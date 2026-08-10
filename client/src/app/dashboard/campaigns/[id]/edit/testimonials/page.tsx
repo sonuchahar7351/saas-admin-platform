@@ -127,6 +127,18 @@ function TestimonialsContent() {
             <p className="mt-2 line-clamp-3 text-sm text-text-secondary">
               {item.description}
             </p>
+            <label className="mt-2 flex items-center gap-1.5 text-xs">
+              <input
+                type="checkbox"
+                checked={item.isActive}
+                onChange={() =>
+                  testimonialsApi
+                    .update(item.id, { isActive: !item.isActive })
+                    .then(load)
+                }
+              />
+              Approved / visible publicly
+            </label>
           </div>
         ))}
         {items.length === 0 && (

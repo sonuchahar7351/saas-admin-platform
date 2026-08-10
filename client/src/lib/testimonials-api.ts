@@ -7,6 +7,7 @@ export interface TestimonialRecord {
   description: string;
   imageId: string | null;
   imageUrl: string | null;
+  isActive: boolean;
 }
 
 export const testimonialsApi = {

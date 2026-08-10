@@ -101,4 +101,66 @@ export class DonationsRepository {
       },
     });
   }
+
+  findCustomerByEmail(email: string) {
+    return this.prisma.customer.findUnique({ where: { email } });
+  }
+
+  createGuestCustomer(name: string, email: string, hashedPassword: string) {
+    return this.prisma.customer.create({
+      data: { name, email, password: hashedPassword },
+    });
+  }
+
+  createBilling(data: {
+    customerId: string;
+    donorName: string;
+    donorEmail: string;
+    pincode: string;
+    city?: string;
+    state?: string;
+    streetAddress?: string;
+  }) {
+    return this.prisma.billing.create({ data });
+  }
+
+  createDonationWithProducts(data: {
+    campaignId: string;
+    customerId: string;
+    billingId: string;
+    donationType: 'AMOUNT' | 'PRODUCT';
+    amount: number;
+    tipAmount: number;
+    message?: string;
+    isAnonymous: boolean;
+    razorpayOrderId: string;
+    productItems?: { productId: string; quantity: number; amount: number }[];
+  }) {
+    const { productItems, ...donationData } = data;
+    return this.prisma.donation.create({
+      data: {
+        ...donationData,
+        status: 'CREATED',
+        ...(productItems &&
+          productItems.length > 0 && {
+            products: { create: productItems },
+          }),
+      },
+    });
+  }
+
+  findProductsByIds(ids: string[]) {
+    return this.prisma.product.findMany({
+      where: { id: { in: ids }, isActive: true },
+    });
+  }
+
+  findCampaignDonors(campaignId: string, limit = 20) {
+    return this.prisma.donation.findMany({
+      where: { campaignId, status: 'PAID' },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: { billing: true },
+    });
+  }
 }

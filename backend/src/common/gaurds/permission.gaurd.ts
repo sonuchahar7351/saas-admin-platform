@@ -10,6 +10,7 @@ import {
   PERMISSION_KEY,
   RequiredPermission,
 } from '../decorators/permission.decorator';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -18,34 +19,15 @@ export class PermissionsGuard implements CanActivate {
     private prisma: PrismaService,
   ) {}
 
-  // async canActivate(context: ExecutionContext): Promise<boolean> {
-  //   const required = this.reflector.getAllAndOverride<RequiredPermission>(
-  //     PERMISSION_KEY,
-  //     [context.getHandler(), context.getClass()],
-  //   );
-  //   if (!required) return true; // no permission required on this route
-
-  //   const { user } = context.switchToHttp().getRequest();
-
-  //   // Super Admin bypasses granular permission checks entirely
-  //   if (user.role === 'SUPER_ADMIN') return true;
-
-  //   const hasPermission = await this.prisma.rolePermission.findFirst({
-  //     where: {
-  //       role: { name: user.role },
-  //       permission: { resource: required.resource, action: required.action },
-  //     },
-  //   });
-
-  //   if (!hasPermission) {
-  //     throw new ForbiddenException(
-  //       `Missing permission: ${required.action} on ${required.resource}`,
-  //     );
-  //   }
-  //   return true;
-  // }
-
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // check @Public() FIRST, same as JwtAuthGuard does — a public route should
+    // never be subject to a permission check, regardless of what its controller declares
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const required = this.reflector.getAllAndOverride<RequiredPermission>(
       PERMISSION_KEY,
       [context.getHandler(), context.getClass()],
@@ -53,25 +35,18 @@ export class PermissionsGuard implements CanActivate {
     if (!required) return true;
 
     const { user } = context.switchToHttp().getRequest();
+    if (!user) return true; // no permission context to check — nothing to enforce here
+
     if (user.role === 'SUPER_ADMIN') return true;
 
-    // Check role-based permission OR direct user-level grant
-    const [rolePermission, userPermission] = await Promise.all([
-      this.prisma.rolePermission.findFirst({
-        where: {
-          role: { name: user.role },
-          permission: { resource: required.resource, action: required.action },
-        },
-      }),
-      this.prisma.userPermission.findFirst({
-        where: {
-          userId: user.userId,
-          permission: { resource: required.resource, action: required.action },
-        },
-      }),
-    ]);
+    const hasPermission = await this.prisma.rolePermission.findFirst({
+      where: {
+        role: { name: user.role },
+        permission: { resource: required.resource, action: required.action },
+      },
+    });
 
-    if (!rolePermission && !userPermission) {
+    if (!hasPermission) {
       throw new ForbiddenException(
         `Missing permission: ${required.action} on ${required.resource}`,
       );

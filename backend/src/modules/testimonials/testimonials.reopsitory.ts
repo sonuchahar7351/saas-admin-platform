@@ -5,9 +5,18 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class TestimonialsRepository {
   constructor(private prisma: PrismaService) {}
 
-  findByCampaign(campaignId: string) {
+  findAllActive(limit: number) {
     return this.prisma.testimonial.findMany({
-      where: { campaignId },
+      where: { isActive: true },
+      include: { campaign: { select: { title: true, slug: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  findByCampaign(campaignId: string, onlyActive = false) {
+    return this.prisma.testimonial.findMany({
+      where: { campaignId, ...(onlyActive && { isActive: true }) },
       orderBy: { createdAt: 'desc' },
     });
   }

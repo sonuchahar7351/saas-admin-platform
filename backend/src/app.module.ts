@@ -22,6 +22,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { UpdatesModule } from './modules/updates/updates.module';
 import { JourneyModule } from './modules/journey/journey.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
+import { ReceiptsModule } from './modules/receipts/receipts.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
     UpdatesModule,
     JourneyModule,
     TestimonialsModule,
+    ReceiptsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

@@ -8,6 +8,8 @@ import { CampaignsRepository } from './campaigns.repository';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { MediaRepository } from '../media/media.repository';
+import { FeatureCampaignDto } from './dto/feature-campaign.dto';
+import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -24,16 +26,55 @@ export class CampaignsService {
     private mediaRepo: MediaRepository,
   ) {}
 
+  async setFeatured(id: string, dto: FeatureCampaignDto) {
+    const campaign = await this.findById(id);
+    if (dto.isFeatured && !dto.featureImageDesktopId) {
+      throw new BadRequestException(
+        'A desktop feature image is required to feature a campaign.',
+      );
+    }
+    return this.repo.update(id, {
+      isFeatured: dto.isFeatured,
+      featuredOrder: dto.isFeatured ? (dto.featuredOrder ?? 0) : null,
+      featureImageDesktopId: dto.isFeatured ? dto.featureImageDesktopId : null,
+      featureImageMobileId: dto.isFeatured ? dto.featureImageMobileId : null,
+    });
+  }
+
+  async findFeatured() {
+    const campaigns = await this.repo.findAll({ status: 'ACTIVE' });
+    const featured = campaigns
+      .filter((c) => c.isFeatured)
+      .sort((a, b) => (a.featuredOrder ?? 0) - (b.featuredOrder ?? 0));
+    return this.attachImageUrls(featured);
+  }
+
   private async attachImageUrls(campaigns: any[]) {
     const cardIds = campaigns.map((c) => c.cardImageId).filter(Boolean);
     const bannerIds = campaigns.flatMap((c) => c.bannerImageIds || []);
-    const allIds = [...new Set([...cardIds, ...bannerIds])];
+    const featureDesktopIds = campaigns
+      .map((c) => c.featureImageDesktopId)
+      .filter(Boolean);
+    const featureMobileIds = campaigns
+      .map((c) => c.featureImageMobileId)
+      .filter(Boolean);
+
+    const allIds = [
+      ...new Set([
+        ...cardIds,
+        ...bannerIds,
+        ...featureDesktopIds,
+        ...featureMobileIds,
+      ]),
+    ];
 
     if (allIds.length === 0) {
       return campaigns.map((c) => ({
         ...c,
         cardImageUrl: null,
         bannerImageUrls: [],
+        featureImageDesktopUrl: null,
+        featureImageMobileUrl: null,
       }));
     }
 
@@ -46,6 +87,12 @@ export class CampaignsService {
       bannerImageUrls: (c.bannerImageIds || [])
         .map((id: string) => urlById.get(id))
         .filter(Boolean),
+      featureImageDesktopUrl: c.featureImageDesktopId
+        ? urlById.get(c.featureImageDesktopId) || null
+        : null,
+      featureImageMobileUrl: c.featureImageMobileId
+        ? urlById.get(c.featureImageMobileId) || null
+        : null,
     }));
   }
 
@@ -200,5 +247,17 @@ export class CampaignsService {
 
   delete(id: string) {
     return this.repo.softDelete(id); // status -> DELETED, matches your spec's status list (not a hard delete)
+  }
+
+  async findPublicPaginated(query: QueryPublicCampaignsDto) {
+    const [data, total] = await this.repo.findPublicPaginated(query);
+    const withImages = await this.attachImageUrls(data);
+    return {
+      data: withImages,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
   }
 }

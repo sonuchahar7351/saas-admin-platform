@@ -28,6 +28,59 @@ export function DonationForm({ campaign }: { campaign: PublicCampaign }) {
   const tipValue = Math.round((finalAmount * tipPercent) / 100);
   const total = finalAmount + tipValue;
 
+  // const handleDonate = async () => {
+  //   if (!customer) {
+  //     router.push(`/login?redirect=/campaigns/${campaign.slug}`);
+  //     return;
+  //   }
+  //   if (!finalAmount || finalAmount < 1) {
+  //     setError("Enter a valid donation amount.");
+  //     return;
+  //   }
+  //   setError("");
+  //   setLoading(true);
+  //   try {
+  //     const scriptLoaded = await loadRazorpayScript();
+  //     if (!scriptLoaded) {
+  //       setError("Could not load payment gateway. Try again.");
+  //       return;
+  //     }
+
+  //     const { data } = await donationsApi.createOrder({
+  //       campaignId: campaign.id,
+  //       amount: finalAmount,
+  //       tipAmount: tipValue,
+  //       message: message || undefined,
+  //       isAnonymous,
+  //       donationType: "AMOUNT",
+  //       donor: {
+  //         name: customer.name,
+  //         email: customer.email,
+  //         pincode: "283119",
+  //       },
+  //     });
+
+  //     const options = {
+  //       key: (data as any).keyId,
+  //       amount: (data as any).amount,
+  //       currency: "INR",
+  //       name: campaign.title,
+  //       description: "Donation",
+  //       order_id: (data as any).orderId,
+  //       prefill: { name: customer.name, email: customer.email },
+  //       theme: { color: "#059669" },
+  //       handler: () => {},
+  //       modal: { ondismiss: () => setLoading(false) },
+  //     };
+
+  //     new (window as any).Razorpay(options).open();
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.message || "Could not start checkout.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleDonate = async () => {
     if (!customer) {
       router.push(`/login?redirect=/campaigns/${campaign.slug}`);
@@ -43,6 +96,7 @@ export function DonationForm({ campaign }: { campaign: PublicCampaign }) {
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         setError("Could not load payment gateway. Try again.");
+        setLoading(false);
         return;
       }
 
@@ -52,6 +106,12 @@ export function DonationForm({ campaign }: { campaign: PublicCampaign }) {
         tipAmount: tipValue,
         message: message || undefined,
         isAnonymous,
+        donationType: "AMOUNT",
+        donor: {
+          name: customer.name,
+          email: customer.email,
+          pincode: "283119",
+        },
       });
 
       const options = {
@@ -63,16 +123,49 @@ export function DonationForm({ campaign }: { campaign: PublicCampaign }) {
         order_id: (data as any).orderId,
         prefill: { name: customer.name, email: customer.email },
         theme: { color: "#059669" },
-        handler: () => router.push("/account?donation=processing"),
-        modal: { ondismiss: () => setLoading(false) },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            await donationsApi.verifyDonation({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            // success — e.g. redirect to a thank-you page or show a success state
+            router.push(`/campaigns/${campaign.slug}?donation=success`);
+          } catch (verifyErr: any) {
+            setError(
+              verifyErr.response?.data?.message ||
+                "Payment succeeded but verification failed. Contact support with your payment ID.",
+            );
+          } finally {
+            setLoading(false);
+          }
+        },
+        // handler: () => router.push('/account?donation=processing'),
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
       };
 
-      new (window as any).Razorpay(options).open();
+      const rzp = new (window as any).Razorpay(options);
+
+      rzp.on("payment.failed", (resp: any) => {
+        setError(
+          resp.error?.description || "Payment failed. Please try again.",
+        );
+        setLoading(false);
+      });
+
+      rzp.open();
     } catch (err: any) {
       setError(err.response?.data?.message || "Could not start checkout.");
-    } finally {
       setLoading(false);
     }
+    // no top-level finally — loading is now controlled by handler/ondismiss/payment.failed
   };
 
   return (

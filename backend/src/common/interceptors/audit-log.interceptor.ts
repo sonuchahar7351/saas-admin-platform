@@ -24,8 +24,9 @@ export class AuditLogInterceptor implements NestInterceptor {
     const { method, user, params, body } = request;
 
     const action = ACTION_MAP[method];
-    // only log mutating requests from authenticated users
-    if (!action || !user) {
+    // Audit logging is for admin-panel actions only — req.user.userId only exists
+    // when the request came through the admin JwtAuthGuard, not customer/guest routes.
+    if (!action || !user || !user.userId) {
       return next.handle();
     }
 

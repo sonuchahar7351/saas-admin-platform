@@ -46,4 +46,20 @@ export class S3Service {
       new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }),
     );
   }
+
+  async uploadBuffer(
+    buffer: Buffer,
+    key: string,
+    contentType: string,
+  ): Promise<{ key: string; url: string }> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      }),
+    );
+    return { key, url: `${process.env.S3_PUBLIC_URL}/${key}` };
+  }
 }
