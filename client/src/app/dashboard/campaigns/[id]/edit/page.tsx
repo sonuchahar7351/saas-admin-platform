@@ -10,6 +10,7 @@ import {
 import { campaignsApi } from "../../../../../lib/campaigns-api";
 import { mediaApi } from "../../../../../lib/media-api";
 import { FeatureCampaignPanel } from "@/components/FeatureCampaignPanel";
+import CampaignStats from "@/components/CampaignStats";
 
 function EditCampaignContent() {
   const router = useRouter();
@@ -44,6 +45,7 @@ function EditCampaignContent() {
       cardImageId: campaign.cardImageId,
       cardImageUrl,
       story: campaign.story,
+      isAddress: campaign.isAddress,
       donationPresets: campaign.donationPresets.map((p: any) => ({
         value: p.amount,
         isDefault: p.isDefault,
@@ -70,6 +72,7 @@ function EditCampaignContent() {
       cardImageId: values.cardImageId || undefined,
       expiryDate: new Date(values.expiryDate).toISOString(),
       story: values.story,
+      isAddress: values.isAddress,
       donationPresets: values.donationPresets.map((p) => ({
         amount: p.value,
         isDefault: p.isDefault,
@@ -87,6 +90,11 @@ function EditCampaignContent() {
 
   return (
     <>
+      <CampaignStats
+        goalAmount={rawCampaign.goalAmount}
+        raisedAmount={rawCampaign.raisedAmount}
+        expiryDate={rawCampaign.expiryDate}
+      />
       <CampaignForm
         mode="edit"
         initialValues={initialValues!}

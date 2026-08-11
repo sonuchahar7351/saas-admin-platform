@@ -191,6 +191,7 @@ export class CampaignsService {
       tipPresets: dto.tipPresets,
       status: 'CREATED', // always, regardless of what the client might try to send
       createdById,
+      isAddress: dto.isAddress,
     });
   }
 

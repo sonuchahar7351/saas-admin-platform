@@ -73,6 +73,12 @@ export class DonationsController {
   }
 
   @Public()
+  @Get('public/:id/summary')
+  getPublicSummary(@Param('id') id: string) {
+    return this.service.getPublicSummary(id);
+  }
+
+  @Public()
   @Get('public/campaign/:campaignId/donors')
   getCampaignDonors(@Param('campaignId') campaignId: string) {
     return this.service.getCampaignDonors(campaignId);

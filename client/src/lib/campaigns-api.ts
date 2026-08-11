@@ -16,6 +16,7 @@ export interface CampaignRecord {
   featureImageMobileUrl?: string | null;
   featuredOrder?: number;
   isFeatured?: boolean;
+  isAddress: boolean;
 }
 
 export interface CreateCampaignPayload {
@@ -28,6 +29,7 @@ export interface CreateCampaignPayload {
   cardImageId?: string;
   story: any;
   expiryDate: string;
+  isAddress: boolean;
   donationPresets: { amount: number; isDefault: boolean }[];
   tipPresets: { percentage: number; isDefault: boolean }[];
 }

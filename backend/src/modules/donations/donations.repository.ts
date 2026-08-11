@@ -163,4 +163,16 @@ export class DonationsRepository {
       include: { billing: true },
     });
   }
+
+  findPublicSummary(id: string) {
+    return this.prisma.donation.findUnique({
+      where: { id },
+      include: {
+        campaign: { select: { title: true, slug: true } },
+        billing: true,
+        products: { include: { product: { select: { title: true } } } },
+        receipt: true,
+      },
+    });
+  }
 }

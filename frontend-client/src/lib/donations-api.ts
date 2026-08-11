@@ -10,6 +10,29 @@ export interface DonorDto {
   streetAddress?: string;
 }
 
+export interface DonationSummary {
+  id: string;
+  status: string;
+  donationType: "AMOUNT" | "PRODUCT";
+  campaignTitle: string;
+  campaignSlug: string;
+  donorName: string;
+  donorEmail: string;
+  amount: number;
+  tipAmount: number;
+  totalAmount: number;
+  paymentId: string | null;
+  createdAt: string;
+  message: string | null;
+  products: { title: string; quantity: number; amount: number }[];
+  receiptUrl: string | null;
+}
+
+export const donationsSummaryApi = {
+  get: (id: string) =>
+    apiClient.get<DonationSummary>(`/donations/public/${id}/summary`),
+};
+
 export const donationsApi = {
   createOrder: (data: {
     campaignId: string;

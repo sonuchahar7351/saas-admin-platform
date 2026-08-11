@@ -48,7 +48,7 @@ export function FaqSection() {
           Frequently asked questions
         </h2>
       </div>
-      <div className="mx-auto max-w-2xl divide-y divide-border rounded-2xl border border-border bg-surface">
+      <div className="mx-auto max-w-6xl divide-y divide-border rounded-2xl border border-border bg-surface">
         {FAQS.map((item, i) => (
           <div key={item.q}>
             <button

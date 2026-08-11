@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { StoryRenderer } from "../../../components/StoryRenderer";
-import { DonationForm } from "../../../components/DonationForm";
 import { CampaignGallery } from "../../../components/campaign/CampaignGallery";
 import { DonorList } from "../../../components/campaign/DonorList";
 import { ProductsSection } from "../../../components/campaign/ProductsSection";
@@ -11,16 +10,26 @@ import { CampaignTestimonials } from "../../../components/campaign/CampaignTesti
 import { UpdatesTimeline } from "../../../components/campaign/UpdatesTimeline";
 import { JourneyTimeline } from "../../../components/campaign/JourneyTimeline";
 import { campaignsApi } from "@/lib/campaigs-api";
+import { DonationSelector } from "@/components/campaign/DonationSelector";
+import { useCartStore } from "@/store/cart-store";
 
 export default function CampaignDetailPage() {
   const { slug } = useParams();
   const [campaign, setCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const initCampaign = useCartStore((s) => s.initCampaign);
 
   useEffect(() => {
     campaignsApi.getBySlug(slug as string).then(({ data }) => {
       setCampaign(data);
       setLoading(false);
+      initCampaign({
+        id: data.id,
+        slug: data.slug,
+        title: data.title,
+        tipPresets: data.tipPresets,
+        isAddress: data.isAddress,
+      });
     });
   }, [slug]);
 
@@ -85,7 +94,7 @@ export default function CampaignDetailPage() {
               </span>
             </div>
           </div>
-          <DonationForm campaign={campaign} />
+          <DonationSelector campaign={campaign} />
           <DonorList campaignId={campaign.id} />
         </div>
       </div>

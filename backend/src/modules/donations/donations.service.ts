@@ -298,4 +298,33 @@ export class DonationsService {
       createdAt: d.createdAt,
     }));
   }
+
+  async getPublicSummary(id: string) {
+    const donation = await this.repo.findPublicSummary(id);
+    if (!donation) throw new NotFoundException('Donation not found');
+
+    return {
+      id: donation.id,
+      status: donation.status,
+      donationType: donation.donationType,
+      campaignTitle: donation.campaign.title,
+      campaignSlug: donation.campaign.slug,
+      donorName: donation.isAnonymous
+        ? 'Anonymous'
+        : donation.billing.donorName,
+      donorEmail: donation.billing.donorEmail,
+      amount: donation.amount,
+      tipAmount: donation.tipAmount,
+      totalAmount: donation.amount + donation.tipAmount,
+      paymentId: donation.razorpayPaymentId,
+      createdAt: donation.createdAt,
+      message: donation.message,
+      products: donation.products.map((p) => ({
+        title: p.product.title,
+        quantity: p.quantity,
+        amount: p.amount,
+      })),
+      receiptUrl: donation.receipt?.pdfUrl || null,
+    };
+  }
 }

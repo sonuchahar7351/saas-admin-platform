@@ -12,6 +12,7 @@ export interface PublicCampaign {
   category: { id: string; name: string };
   ngo: { id: string; name: string };
   story?: any;
+  isAddress: boolean;
   donationPresets: { amount: number; isDefault: boolean }[];
   tipPresets: { percentage: number; isDefault: boolean }[];
 }

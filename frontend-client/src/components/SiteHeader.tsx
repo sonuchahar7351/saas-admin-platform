@@ -26,6 +26,12 @@ export function SiteHeader() {
           <Link href="/campaigns" className="text-text-muted hover:text-text">
             Explore
           </Link>
+          <Link href="/about" className="text-text-muted hover:text-text">
+            About
+          </Link>
+          <Link href="/contact" className="text-text-muted hover:text-text">
+            Contact
+          </Link>
         </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle />
