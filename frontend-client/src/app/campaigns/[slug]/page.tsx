@@ -21,14 +21,14 @@ export default function CampaignDetailPage() {
 
   useEffect(() => {
     campaignsApi.getBySlug(slug as string).then(({ data }) => {
-      setCampaign(data);
+      setCampaign(data[0]);
       setLoading(false);
       initCampaign({
-        id: data.id,
-        slug: data.slug,
-        title: data.title,
-        tipPresets: data.tipPresets,
-        isAddress: data.isAddress,
+        id: data[0].id,
+        slug: data[0].slug,
+        title: data[0].title,
+        tipPresets: data[0].tipPresets,
+        isAddress: data[0].isAddress,
       });
     });
   }, [slug]);
@@ -55,8 +55,8 @@ export default function CampaignDetailPage() {
     <div className="mx-auto max-w-5xl px-6 py-10">
       <CampaignGallery images={galleryImages} />
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-10">
+      <div className="mt-4 grid gap-10 lg:grid-cols-[1fr_360px]">
+        <div className="sm:space-y-10 space-y-4">
           <div>
             <span className="font-mono text-xs uppercase tracking-wide text-accent">
               {campaign.category.name}
@@ -69,7 +69,33 @@ export default function CampaignDetailPage() {
             </p>
           </div>
 
-          {campaign.story && <StoryRenderer content={campaign.story} />}
+          <div className="block sm:hidden space-y-4">
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EDEBE4]">
+                <div
+                  className="h-full rounded-full bg-accent"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              <div className="mt-3 flex items-baseline gap-1.5">
+                <span className="font-heading text-2xl font-semibold">
+                  ₹{(campaign.raisedAmount / 100).toLocaleString("en-IN")}
+                </span>
+                <span className="text-sm text-text-muted">
+                  raised of ₹
+                  {(campaign.goalAmount / 100).toLocaleString("en-IN")}
+                </span>
+              </div>
+            </div>
+            <DonationSelector campaign={campaign} />
+          </div>
+
+          {campaign.story && (
+            <div>
+              <h4 className="text-xl font-bold">Story</h4>
+              <StoryRenderer content={campaign.story} />
+            </div>
+          )}
 
           <ProductsSection campaignId={campaign.id} />
           <JourneyTimeline campaignId={campaign.id} />
@@ -78,7 +104,7 @@ export default function CampaignDetailPage() {
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border bg-surface p-5">
+          <div className="rounded-2xl border border-border bg-surface p-5 hidden sm:block">
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EDEBE4]">
               <div
                 className="h-full rounded-full bg-accent"
@@ -94,7 +120,9 @@ export default function CampaignDetailPage() {
               </span>
             </div>
           </div>
-          <DonationSelector campaign={campaign} />
+          <div className="hidden sm:block">
+            <DonationSelector campaign={campaign} />
+          </div>
           <DonorList campaignId={campaign.id} />
         </div>
       </div>

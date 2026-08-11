@@ -104,10 +104,11 @@ export class CampaignsService {
     ) {
       return null;
     }
-    const cardImage = campaign.cardImageId
-      ? await this.mediaRepo.findById(campaign.cardImageId)
-      : null;
-    return { ...campaign, cardImageUrl: cardImage?.url || null };
+    // const cardImage = campaign.cardImageId
+    //   ? await this.mediaRepo.findById(campaign.cardImageId)
+    //   : null;
+    // return { ...campaign, cardImageUrl: cardImage?.url || null };
+    return this.attachImageUrls([campaign]);
   }
 
   async findAll(filters: { status?: string; categoryId?: string }) {

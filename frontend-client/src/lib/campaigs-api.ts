@@ -43,7 +43,7 @@ export const campaignsApi = {
     apiClient.get<PaginatedCampaigns>("/campaigns/public", { params: query }),
 
   getBySlug: (slug: string) =>
-    apiClient.get<PublicCampaign>(`/campaigns/public/${slug}`),
+    apiClient.get<PublicCampaign[]>(`/campaigns/public/${slug}`),
 
   // add to campaignsApi:
   getFeatured: () =>

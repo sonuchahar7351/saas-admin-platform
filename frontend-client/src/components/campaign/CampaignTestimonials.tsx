@@ -6,6 +6,7 @@ import {
   campaignTestimonialsApi,
   CampaignTestimonial,
 } from "../../lib/campaign-testimonials-api";
+import CustomSwiper from "../CustomSwiper";
 
 export function CampaignTestimonials({ campaignId }: { campaignId: string }) {
   const [items, setItems] = useState<CampaignTestimonial[]>([]);
@@ -19,11 +20,27 @@ export function CampaignTestimonials({ campaignId }: { campaignId: string }) {
   if (items.length === 0) return null;
 
   return (
-    <div>
+    <div className="block">
       <h2 className="mb-4 font-heading text-xl font-semibold">
         What people are saying
       </h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+
+      <CustomSwiper
+        slidesPerView={1}
+        spaceBetween={10}
+        showDots={true}
+        autoplay={items.length > 3}
+        breakpoints={{
+          640: { slidesPerView: 1, spaceBetween: 10 },
+          768: { slidesPerView: 2, spaceBetween: 15 },
+          1024: { slidesPerView: 2, spaceBetween: 20 },
+        }}
+        loop={items.length > 3}
+        wrapperClassName="w-full sm:max-w-[570px] max-w-[380px]"
+        carouselContainerClassName="relative w-full pb-8"
+        paginationColor="#706c64"
+        activePaginationColor="#10b981"
+      >
         {items.map((t) => (
           <div
             key={t.id}
@@ -52,7 +69,7 @@ export function CampaignTestimonials({ campaignId }: { campaignId: string }) {
             </div>
           </div>
         ))}
-      </div>
+      </CustomSwiper>
     </div>
   );
 }

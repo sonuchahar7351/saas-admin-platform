@@ -13,7 +13,7 @@ function QuantityStepper({
   onUpdate: (v: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-lg border border-border">
+    <div className="flex items-center gap-1.5 rounded-lg border border-border h-7.5">
       <button
         type="button"
         onClick={() => onUpdate(value - 1)}
@@ -48,7 +48,7 @@ function ProductCard({
 }) {
   if (size === "SMALL") {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+      <div className="sm:float-left sm:w-[calc(50%-20px)] sm:m-2.5 m-0  w-full flex items-center gap-3 rounded-xl border border-border bg-surface p-3  h-30">
         {p.imageUrl && (
           <img
             src={p.imageUrl}
@@ -65,7 +65,7 @@ function ProductCard({
         {cartQty <= 0 ? (
           <button
             onClick={() => onAdd(1)}
-            className="shrink-0 rounded-lg border border-accent px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/5"
+            className="shrink-0 rounded-lg border border-accent px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/5 h-7.5"
           >
             Add
           </button>
@@ -78,7 +78,7 @@ function ProductCard({
 
   if (size === "MEDIUM") {
     return (
-      <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+      <div className="sm:float-left  sm:w-[calc(50%-20px)] sm:m-2.5 m-0 w-full overflow-hidden rounded-2xl border border-border bg-surface h-65">
         {p.imageUrl && (
           <img src={p.imageUrl} alt="" className="h-32 w-full object-cover" />
         )}
@@ -91,14 +91,17 @@ function ProductCard({
             <span className="font-heading text-base font-semibold">
               ₹{(p.amount / 100).toLocaleString("en-IN")}
             </span>
-            <QuantityStepper value={cartQty} onUpdate={onUpdate} />
+            {cartQty <= 0 ? (
+              <button
+                onClick={() => onAdd(1)}
+                className="shrink-0 rounded-lg border border-accent px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/5"
+              >
+                Add
+              </button>
+            ) : (
+              <QuantityStepper value={cartQty} onUpdate={onUpdate} />
+            )}
           </div>
-          <button
-            onClick={() => onAdd(1)}
-            className="mt-3 w-full rounded-lg bg-accent py-2 text-xs font-medium text-white hover:bg-accent-hover"
-          >
-            {cartQty > 0 ? `Added × ${cartQty} — add more` : "Add to donation"}
-          </button>
         </div>
       </div>
     );
@@ -119,14 +122,17 @@ function ProductCard({
           <span className="font-heading text-xl font-semibold text-accent">
             ₹{(p.amount / 100).toLocaleString("en-IN")}
           </span>
-          <QuantityStepper value={cartQty} onUpdate={onUpdate} />
+          {cartQty <= 0 ? (
+            <button
+              onClick={() => onAdd(1)}
+              className="shrink-0 rounded-lg border border-accent px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/5 h-7.5"
+            >
+              Add
+            </button>
+          ) : (
+            <QuantityStepper value={cartQty} onUpdate={onUpdate} />
+          )}
         </div>
-        <button
-          onClick={() => onAdd(1)}
-          className="mt-4 w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
-        >
-          {cartQty > 0 ? `Added × ${cartQty} — add more` : "Donate this"}
-        </button>
       </div>
     </div>
   );
@@ -164,21 +170,21 @@ export function ProductsSection({ campaignId }: { campaignId: string }) {
   return (
     <div>
       <h2 className="mb-4 font-heading text-xl font-semibold">Ways to help</h2>
-      <div className="space-y-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {products
-          .filter((p) => p.type === "SMALL")
+          .filter((p) => p.type === "MEGA")
           .map((p) => (
             <ProductCard
               key={p.id}
               p={p}
-              size="SMALL"
-              onAdd={(qty) => handleAdd(p, qty)}
+              size="MEGA"
               onUpdate={(qty) => handleUpdate(p, qty)}
+              onAdd={(qty) => handleAdd(p, qty)}
               cartQty={cartQtyFor(p.id)}
             />
           ))}
       </div>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      <div className="relative my-4 flex flex-col gap-2 sm:block">
         {products
           .filter((p) => p.type === "MEDIUM")
           .map((p) => (
@@ -191,17 +197,16 @@ export function ProductsSection({ campaignId }: { campaignId: string }) {
               cartQty={cartQtyFor(p.id)}
             />
           ))}
-      </div>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+
         {products
-          .filter((p) => p.type === "MEGA")
+          .filter((p) => p.type === "SMALL")
           .map((p) => (
             <ProductCard
               key={p.id}
               p={p}
-              size="MEGA"
-              onUpdate={(qty) => handleUpdate(p, qty)}
+              size="SMALL"
               onAdd={(qty) => handleAdd(p, qty)}
+              onUpdate={(qty) => handleUpdate(p, qty)}
               cartQty={cartQtyFor(p.id)}
             />
           ))}

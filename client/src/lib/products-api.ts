@@ -10,6 +10,7 @@ export interface ProductRecord {
   type: "SMALL" | "MEDIUM" | "MEGA";
   isActive: boolean;
   imageId: string | null;
+  imageUrl: string | null;
 }
 
 export const productsApi = {

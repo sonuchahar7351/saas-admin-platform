@@ -254,6 +254,7 @@ function ProductsContent() {
                 label="Product image"
                 category="PRODUCT"
                 mediaId={editing.imageId || null}
+                initialUrl={editing.imageUrl || null}
                 onChange={(id) => setEditing({ ...editing, imageId: id })}
               />
             </div>
