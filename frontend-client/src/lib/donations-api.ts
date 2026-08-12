@@ -28,6 +28,27 @@ export interface DonationSummary {
   receiptUrl: string | null;
 }
 
+export interface DonationListItem {
+  id: string;
+  campaignTitle: string;
+  campaignSlug: string;
+  donorName: string;
+  amount: number;
+  tipAmount: number;
+  totalAmount: number;
+  status: string;
+  donationType: "AMOUNT" | "PRODUCT";
+  createdAt: string;
+}
+
+export interface PaginatedDonations {
+  data: DonationListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const donationsSummaryApi = {
   get: (id: string) =>
     apiClient.get<DonationSummary>(`/donations/public/${id}/summary`),
@@ -62,4 +83,13 @@ export const donationsApi = {
       razorpay_payment_id,
       razorpay_signature,
     }),
+};
+
+export const myDonationsApi = {
+  getAll: (page = 1, limit = 10) =>
+    apiClient.get<PaginatedDonations>("/donations/my-donations", {
+      params: { page, limit },
+    }),
+  getById: (id: string) =>
+    apiClient.get<DonationSummary>(`/donations/my-donations/${id}`),
 };

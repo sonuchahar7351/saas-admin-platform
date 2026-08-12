@@ -34,11 +34,33 @@ export class DonationsController {
     return this.service.createOrder(dto, authenticatedCustomerId);
   }
 
+  // @Public()
+  // @UseGuards(CustomerJwtAuthGuard)
+  // @Get('my-donations')
+  // getMyDonations(@Req() req: any) {
+  //   return this.service.getMyDonations(req.user.customerId);
+  // }
+
   @Public()
   @UseGuards(CustomerJwtAuthGuard)
   @Get('my-donations')
-  getMyDonations(@Req() req: any) {
-    return this.service.getMyDonations(req.user.customerId);
+  getMyDonations(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.getMyDonations(
+      req.user.customerId,
+      page ? Number(page) : undefined,
+      limit ? Number(limit) : undefined,
+    );
+  }
+
+  @Public()
+  @UseGuards(CustomerJwtAuthGuard)
+  @Get('my-donations/:id')
+  getMyDonationDetail(@Req() req: any, @Param('id') id: string) {
+    return this.service.getMyDonationDetail(req.user.customerId, id);
   }
 
   @Public()

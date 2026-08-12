@@ -175,4 +175,21 @@ export class DonationsRepository {
       },
     });
   }
+
+  findByCustomerPaginated(customerId: string, page: number, limit: number) {
+    const where = { customerId };
+    return Promise.all([
+      this.prisma.donation.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          campaign: { select: { title: true, slug: true } },
+          billing: true,
+        },
+      }),
+      this.prisma.donation.count({ where }),
+    ]);
+  }
 }

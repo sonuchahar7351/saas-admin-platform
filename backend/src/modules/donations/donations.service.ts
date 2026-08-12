@@ -235,9 +235,9 @@ export class DonationsService {
     }
   }
 
-  getMyDonations(customerId: string) {
-    return this.repo.findByCustomer(customerId);
-  }
+  // getMyDonations(customerId: string) {
+  //   return this.repo.findByCustomer(customerId);
+  // }
 
   async findAllAdmin(query: QueryDonationsDto) {
     const [data, total] = await this.repo.findAllAdmin(query);
@@ -326,5 +326,39 @@ export class DonationsService {
       })),
       receiptUrl: donation.receipt?.pdfUrl || null,
     };
+  }
+
+  async getMyDonations(customerId: string, page = 1, limit = 10) {
+    const [data, total] = await this.repo.findByCustomerPaginated(
+      customerId,
+      page,
+      limit,
+    );
+    return {
+      data: data.map((d) => ({
+        id: d.id,
+        campaignTitle: d.campaign.title,
+        campaignSlug: d.campaign.slug,
+        donorName: d.isAnonymous ? 'Anonymous' : d.billing.donorName,
+        amount: d.amount,
+        tipAmount: d.tipAmount,
+        totalAmount: d.amount + d.tipAmount,
+        status: d.status,
+        donationType: d.donationType,
+        createdAt: d.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getMyDonationDetail(customerId: string, donationId: string) {
+    const donation = await this.repo.findPublicSummary(donationId); // reuse the same query as the Thank You summary
+    if (!donation || donation.customerId !== customerId) {
+      throw new NotFoundException('Donation not found'); // same "don't reveal existence" principle as receipts
+    }
+    return this.getPublicSummary(donationId); // reuse the exact same shaping logic — one source of truth for this shape
   }
 }
