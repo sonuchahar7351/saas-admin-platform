@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { donationsSummaryApi, DonationSummary } from "../../lib/donations-api";
+import { EightyGSection } from "@/components/EightyGSection";
 
 export default function ThankYouPage() {
   const donationId = useSearchParams().get("donationId");
@@ -236,6 +237,21 @@ export default function ThankYouPage() {
                 >
                   Back to campaign <ArrowRight size={14} />
                 </Link>
+              </motion.div>
+            )}
+
+            {summary?.status === "PAID" && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="mt-4"
+              >
+                <EightyGSection
+                  donationId={summary?.id}
+                  donorName={summary?.donorName}
+                  donorEmail={summary?.donorEmail}
+                />
               </motion.div>
             )}
 

@@ -2,6 +2,7 @@
 
 import { X, Download } from "lucide-react";
 import { DonationSummary } from "../lib/donations-api";
+import { EightyGSection } from "./EightyGSection";
 
 export function DonationDetailPanel({
   donation,
@@ -88,6 +89,16 @@ export function DonationDetailPanel({
               </div>
             )}
           </div>
+
+          {donation.status === "PAID" && (
+            <div className="mt-4">
+              <EightyGSection
+                donationId={donation.id}
+                donorName={donation.donorName}
+                donorEmail={donation.donorEmail}
+              />
+            </div>
+          )}
 
           {donation.receiptUrl && (
             <a

@@ -23,6 +23,8 @@ import { UpdatesModule } from './modules/updates/updates.module';
 import { JourneyModule } from './modules/journey/journey.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
+import { CustomersModule } from './modules/customers/customers.module';
+import { EightyGModule } from './modules/eighty-g/eighty-g.module';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { ReceiptsModule } from './modules/receipts/receipts.module';
     JourneyModule,
     TestimonialsModule,
     ReceiptsModule,
+    CustomersModule,
+    EightyGModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

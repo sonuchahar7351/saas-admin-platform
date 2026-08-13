@@ -30,4 +30,42 @@ export class EmailService {
       html: `<p>Click the link below to reset your password. This link expires in 30 minutes.</p><p><a href="${resetLink}">${resetLink}</a></p>`,
     });
   }
+
+  async sendCertificateEmail(
+    to: string,
+    donorName: string,
+    certificateUrl: string,
+  ) {
+    if (!this.transporter) {
+      this.logger.warn(
+        `SMTP not configured — 80G certificate for ${to}: ${certificateUrl}`,
+      );
+      return;
+    }
+    await this.transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject: 'Your 80G Certificate is ready',
+      html: `<p>Dear ${donorName},</p><p>Your 80G tax exemption certificate has been approved. You can download it here:</p><p><a href="${certificateUrl}">${certificateUrl}</a></p><p>Thank you for your generous contribution.</p>`,
+    });
+  }
+
+  async sendApplicationRejectedEmail(
+    to: string,
+    donorName: string,
+    reason: string,
+  ) {
+    if (!this.transporter) {
+      this.logger.warn(
+        `SMTP not configured — 80G rejection for ${to}: ${reason}`,
+      );
+      return;
+    }
+    await this.transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject: 'Update on your 80G certificate application',
+      html: `<p>Dear ${donorName},</p><p>We were unable to approve your 80G certificate application for the following reason:</p><p>${reason}</p><p>Please contact support if you believe this is an error.</p>`,
+    });
+  }
 }

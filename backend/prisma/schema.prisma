@@ -27,6 +27,7 @@ model User {
   userPermissions UserPermission[]
   createdCampaigns Campaign[]
   uploadedMedia    Media[]
+  eightyGReviews EightyGApplication[]
  
 
   createdAt     DateTime  @default(now())
@@ -132,6 +133,7 @@ model Customer {
   refreshTokens CustomerRefreshToken[]
   donations   Donation[]
   billings Billing[]
+  eightyGApplications EightyGApplication[]
   passwordResetTokens PasswordResetToken[]
 
   createdAt     DateTime  @default(now())
@@ -401,6 +403,7 @@ model Donation {
   donationType DonationType @default(AMOUNT)
   products     DonationProduct[]
   receipt      Receipt?
+  eightyGApplication EightyGApplication?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -464,4 +467,35 @@ model PasswordResetToken {
   createdAt  DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+enum EightyGStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model EightyGApplication {
+  id             String        @id @default(uuid())
+  donationId     String        @unique // the actual enforcement of "one application per donation"
+  donation       Donation      @relation(fields: [donationId], references: [id])
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+
+  panNumber      String
+  fullName       String
+  email          String
+  address        String
+
+  status         EightyGStatus @default(PENDING)
+  certificateUrl String?
+  rejectionReason String?
+
+  reviewedById   String?
+  reviewedBy     User?         @relation(fields: [reviewedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("eighty_g_applications")
 }

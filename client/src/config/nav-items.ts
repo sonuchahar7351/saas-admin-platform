@@ -1,7 +1,7 @@
 export interface NavItem {
   label: string;
   href: string;
-  roles: string[]; // which roles see this nav item
+  roles: string[];
 }
 
 export const navItems: NavItem[] = [
@@ -24,6 +24,21 @@ export const navItems: NavItem[] = [
     label: "NGOs",
     href: "/dashboard/ngos",
     roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
+    label: "Transactions",
+    href: "/dashboard/transactions",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
+    label: "Customers",
+    href: "/dashboard/customers",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
+    label: "80G Applications",
+    href: "/dashboard/eighty-g",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN"],
   },
   {
     label: "Users",
@@ -49,10 +64,5 @@ export const navItems: NavItem[] = [
     label: "Media Library",
     href: "/dashboard/media",
     roles: ["SUPER_ADMIN", "SUB_ADMIN"],
-  },
-  {
-    label: "Transactions",
-    href: "/dashboard/transactions",
-    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
   },
 ];
