@@ -8,6 +8,8 @@ import { CreateDonationDto } from './dto/create-donation-order.dto';
 import * as bcrypt from 'bcrypt';
 import { ReceiptsService } from '../receipts/receipts.service';
 import { VerifyDonationDto } from './dto/verify-donation.dto';
+import { ExportDonationsDto } from './dto/export-donations.dto';
+import { buildDonationsWorkbook } from './excel-export.util';
 
 @Injectable()
 export class DonationsService {
@@ -360,5 +362,36 @@ export class DonationsService {
       throw new NotFoundException('Donation not found'); // same "don't reveal existence" principle as receipts
     }
     return this.getPublicSummary(donationId); // reuse the exact same shaping logic — one source of truth for this shape
+  }
+
+  async exportDonations(dto: ExportDonationsDto) {
+    const where = this.repo.buildExportWhere(dto);
+
+    let donations: any[];
+
+    if (dto.mode === 'bulk') {
+      donations = await this.repo.findForExportBulk(where);
+    } else if (dto.mode === 'range') {
+      if (!dto.rangeStart || !dto.rangeEnd || dto.rangeEnd < dto.rangeStart) {
+        throw new BadRequestException(
+          'A valid range (e.g. start=1, end=200) is required.',
+        );
+      }
+      const skip = dto.rangeStart - 1;
+      const take = dto.rangeEnd - dto.rangeStart + 1;
+      donations = await this.repo.findForExportRange(where, skip, take);
+    } else {
+      // selected — respects filters too: only export selected IDs that also still match the current filter set
+      if (!dto.selectedIds || dto.selectedIds.length === 0) {
+        throw new BadRequestException('Select at least one row to export.');
+      }
+      const allMatching = await this.repo.findForExportBulk(where);
+      const matchingIds = new Set(allMatching.map((d) => d.id));
+      donations = allMatching.filter(
+        (d) => dto.selectedIds!.includes(d.id) && matchingIds.has(d.id),
+      );
+    }
+
+    return buildDonationsWorkbook(donations);
   }
 }

@@ -53,6 +53,7 @@ async function main() {
     { resource: 'testimonials', action: 'delete' },
     { resource: 'eightyG', action: 'read' },
     { resource: 'eightyG', action: 'write' },
+    { resource: 'donations', action: 'export' },
   ];
 
   for (const p of permissions) {

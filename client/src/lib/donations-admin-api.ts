@@ -35,4 +35,15 @@ export const donationsAdminApi = {
     }>("/donations", { params }),
   getById: (id: string) => apiClient.get<DonationRecord>(`/donations/${id}`),
   refund: (id: string) => apiClient.post(`/donations/${id}/refund`),
+  export: (params: {
+    status?: string;
+    campaignId?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    mode: "bulk" | "range" | "selected";
+    rangeStart?: number;
+    rangeEnd?: number;
+    selectedIds?: string[];
+  }) => apiClient.get("/donations/export", { params, responseType: "blob" }),
 };

@@ -15,7 +15,7 @@ import { ApplyEightyGDto, RejectEightyGDto } from './dto/eighty-g.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { MulterFile } from '../../common/types/multer-file.type';
+import type { MulterFile } from '../../common/types/multer-file.type';
 
 @Controller('eighty-g')
 export class EightyGController {

@@ -10,8 +10,9 @@ import {
   UseGuards,
   Query,
   Param,
+  Res,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { DonationsService } from './donations.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guard';
@@ -21,10 +22,26 @@ import { Roles } from '../../common/decorators/role.decorator';
 import { OptionalCustomerAuthGuard } from '../../common/gaurds/optional-customer-auth.guard';
 import { CreateDonationDto } from './dto/create-donation-order.dto';
 import { VerifyDonationDto } from './dto/verify-donation.dto';
+import { ExportDonationsDto } from './dto/export-donations.dto';
 
 @Controller('donations')
 export class DonationsController {
   constructor(private service: DonationsService) {}
+
+  @RequirePermission('donations', 'export')
+  @Get('export')
+  async exportDonations(
+    @Query() dto: ExportDonationsDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.service.exportDonations(dto);
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="donations-export-${Date.now()}.xlsx"`,
+    });
+    res.send(buffer);
+  }
 
   @Public()
   @UseGuards(OptionalCustomerAuthGuard)
@@ -33,13 +50,6 @@ export class DonationsController {
     const authenticatedCustomerId = req.user?.customerId || null;
     return this.service.createOrder(dto, authenticatedCustomerId);
   }
-
-  // @Public()
-  // @UseGuards(CustomerJwtAuthGuard)
-  // @Get('my-donations')
-  // getMyDonations(@Req() req: any) {
-  //   return this.service.getMyDonations(req.user.customerId);
-  // }
 
   @Public()
   @UseGuards(CustomerJwtAuthGuard)

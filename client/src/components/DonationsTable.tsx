@@ -22,6 +22,7 @@ import {
 import { donationsAdminApi, DonationRecord } from "../lib/donations-admin-api";
 import { TransactionDetailModal } from "./TransactionDetailModal";
 import { useAuthStore } from "../store/auth-store";
+import { ExportPanel } from "./ExportPanel";
 
 const columnHelper = createColumnHelper<DonationRecord>();
 
@@ -39,6 +40,7 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
   const [selectedDonation, setSelectedDonation] =
     useState<DonationRecord | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [rowSelection, setRowSelection] = useState({});
   const currentUser = useAuthStore((s) => s.user);
   const canRefund = currentUser?.role === "SUPER_ADMIN";
 
@@ -97,6 +99,23 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
     }
 
     cols.push(
+      columnHelper.display({
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        ),
+      }),
       columnHelper.accessor("amount", {
         header: "Amount",
         cell: (info) => `₹${(info.getValue() / 100).toLocaleString("en-IN")}`,
@@ -194,11 +213,13 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
   const table = useReactTable({
     data: data?.data || [],
     columns,
-    state: { sorting },
+    state: { sorting, rowSelection },
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
     manualPagination: true,
+    enableRowSelection: true,
   });
 
   const runSearch = (e: React.FormEvent) => {
@@ -258,6 +279,20 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
             setPage(1);
           }}
           className="rounded-lg border border-border px-3 py-2 text-sm outline-none"
+        />
+        <ExportPanel
+          filters={{
+            status: status || undefined,
+            search: search || undefined,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            campaignId,
+          }}
+          selectedIds={
+            Object.keys(rowSelection)
+              .map((idx) => data?.data[Number(idx)]?.id)
+              .filter(Boolean) as string[]
+          }
         />
       </div>
 

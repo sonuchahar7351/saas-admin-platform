@@ -192,4 +192,87 @@ export class DonationsRepository {
       this.prisma.donation.count({ where }),
     ]);
   }
+
+  buildExportWhere(filters: {
+    status?: string;
+    campaignId?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const { status, campaignId, search, startDate, endDate } = filters;
+    return {
+      ...(status && { status }),
+      ...(campaignId && { campaignId }),
+      ...((startDate || endDate) && {
+        createdAt: {
+          ...(startDate && { gte: new Date(startDate) }),
+          ...(endDate && { lte: new Date(endDate) }),
+        },
+      }),
+      ...(search && {
+        OR: [
+          {
+            billing: {
+              donorName: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            billing: {
+              donorEmail: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            razorpayPaymentId: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          },
+          {
+            razorpayOrderId: { contains: search, mode: 'insensitive' as const },
+          },
+          {
+            campaign: {
+              slug: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+        ],
+      }),
+    };
+  }
+
+  findForExportBulk(where: any) {
+    return this.prisma.donation.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        campaign: { select: { title: true, slug: true } },
+        billing: true,
+      },
+    });
+  }
+
+  findForExportRange(where: any, skip: number, take: number) {
+    return this.prisma.donation.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+      include: {
+        campaign: { select: { title: true, slug: true } },
+        billing: true,
+      },
+    });
+  }
+
+  findForExportSelected(ids: string[]) {
+    return this.prisma.donation.findMany({
+      where: { id: { in: ids } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        campaign: { select: { title: true, slug: true } },
+        billing: true,
+      },
+    });
+  }
 }
