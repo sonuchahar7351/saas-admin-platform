@@ -20,6 +20,7 @@ export default function ThankYouPage() {
   const [summary, setSummary] = useState<DonationSummary | null>(null);
   const [confirming, setConfirming] = useState(true);
   const attemptsRef = useRef(0);
+  const recurringId = useSearchParams().get("recurringId");
 
   useEffect(() => {
     if (!donationId) return;

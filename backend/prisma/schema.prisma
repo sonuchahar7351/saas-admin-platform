@@ -135,6 +135,7 @@ model Customer {
   billings Billing[]
   eightyGApplications EightyGApplication[]
   passwordResetTokens PasswordResetToken[]
+  recurringDonations RecurringDonation[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -254,7 +255,7 @@ model Campaign {
   featureImageDesktopId String?
   featureImageMobileId  String?
   isAddress             Boolean  @default(false) // whether checkout requires city/state/street
-
+  recurringDonations RecurringDonation[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -404,6 +405,8 @@ model Donation {
   products     DonationProduct[]
   receipt      Receipt?
   eightyGApplication EightyGApplication?
+   recurringDonationId String?
+  recurringDonation    RecurringDonation? @relation(fields: [recurringDonationId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -429,6 +432,7 @@ model Billing {
   state         String?
   streetAddress String?
   donations     Donation[]
+  recurringDonations RecurringDonation[]
   createdAt     DateTime @default(now())
 
   @@map("billing")
@@ -498,4 +502,59 @@ model EightyGApplication {
   updatedAt DateTime @updatedAt
 
   @@map("eighty_g_applications")
+}
+
+// recurrring payment system
+
+enum RecurringFrequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum RecurringStatus {
+  CREATED     // subscription created on Razorpay, awaiting customer authorization
+  ACTIVE      // authorized, Razorpay is billing on schedule
+  PAUSED
+  HALTED      // Razorpay stopped after repeated charge failures
+  CANCELLED
+  COMPLETED   // reached total_count cycles
+}
+
+model RecurringPlanCache {
+  id             String   @id @default(uuid())
+  campaignId     String
+  amount         Int
+  frequency      RecurringFrequency
+  razorpayPlanId String   @unique
+  createdAt      DateTime @default(now())
+
+  @@unique([campaignId, amount, frequency]) // reuse an existing Plan for the same combo, don't duplicate
+  @@map("recurring_plan_cache")
+}
+
+model RecurringDonation {
+  id                     String             @id @default(uuid())
+  campaignId             String
+  campaign               Campaign           @relation(fields: [campaignId], references: [id])
+  customerId             String
+  customer               Customer           @relation(fields: [customerId], references: [id])
+  billingId              String
+  billing                Billing            @relation(fields: [billingId], references: [id])
+
+  frequency              RecurringFrequency
+  amount                 Int                // paise, per cycle
+  tipPercentage          Int                @default(0)
+  status                 RecurringStatus    @default(CREATED)
+
+  razorpayPlanId         String
+  razorpaySubscriptionId String             @unique
+
+  cancelledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  donations   Donation[] // each cycle's actual charge, once it's captured
+
+  @@map("recurring_donations")
 }

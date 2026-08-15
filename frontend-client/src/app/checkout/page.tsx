@@ -6,6 +6,8 @@ import { useCustomerAuthStore } from "@/store/customer-auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { loadRazorpayScript } from "@/lib/load-razorpay";
 import { donationsApi } from "@/lib/donations-api";
+import { recurringDonationsApi } from "@/lib/recurring-donations-api";
+import { Currency } from "lucide-react";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -77,6 +79,50 @@ export default function CheckoutPage() {
       setError(
         "Please set a password to continue — this creates your donor account.",
       );
+      return;
+    }
+
+    if (cart.isRecurring) {
+      setSubmitting(true);
+      try {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          setError("Could not load payment gateway.");
+          return;
+        }
+
+        const { data } = await recurringDonationsApi.setup({
+          campaignId,
+          frequency: cart.recurringFrequency,
+          amount: donationAmount,
+          tipPercentage,
+          donor,
+          guestPassword: customer ? undefined : guestPassword,
+        });
+
+        const options = {
+          key: (data as any).keyId,
+          subscription_id: (data as any).subscriptionId,
+          name: campaignTitle,
+          description: `${cart.recurringFrequency} recurring donation`,
+          prefill: { name: donor.name, email: donor.email },
+          theme: { color: "#059669" },
+          handler: (response: any) => {
+            console.log(response);
+            clearCart();
+            router.push(
+              `/thank-you?recurringId=${(data as any).recurringDonationId}`,
+            );
+          },
+          modal: { ondismiss: () => setSubmitting(false) },
+        };
+        new (window as any).Razorpay(options).open();
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message || "Could not set up recurring donation.",
+        );
+        setSubmitting(false);
+      }
       return;
     }
 

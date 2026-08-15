@@ -7,7 +7,15 @@ import { PublicCampaign } from "@/lib/campaigs-api";
 
 export function DonationSelector({ campaign }: { campaign: PublicCampaign }) {
   const router = useRouter();
-  const { setDonationAmount, baseAmount, productCart } = useCartStore();
+  const {
+    setDonationAmount,
+    baseAmount,
+    productCart,
+    isRecurring,
+    recurringFrequency,
+    toggleRecurring,
+    setRecurringFrequency,
+  } = useCartStore();
   const [customAmount, setCustomAmount] = useState("");
 
   const defaultPreset =
@@ -66,6 +74,33 @@ export function DonationSelector({ campaign }: { campaign: PublicCampaign }) {
         placeholder="Or enter a custom amount"
         className="mt-2 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
       />
+      <label className="mt-3 flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={isRecurring}
+          onChange={(e) => toggleRecurring(e.target.checked)}
+        />
+        Make this a recurring donation
+      </label>
+
+      {isRecurring && (
+        <div className="mt-2">
+          <p className="mb-1.5 text-xs text-text-muted">
+            7-day free trial — no charge until it's activated.
+          </p>
+          <div className="flex gap-2">
+            {(["WEEKLY", "MONTHLY", "QUARTERLY"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setRecurringFrequency(f)}
+                className={`flex-1 rounded-lg border py-1.5 text-xs font-medium ${recurringFrequency === f ? "border-accent bg-accent/5 text-accent" : "border-border text-text-muted"}`}
+              >
+                {f.charAt(0) + f.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <button
         onClick={() => router.push("/checkout")}
         disabled={baseAmount < 1}

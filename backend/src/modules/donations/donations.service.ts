@@ -237,10 +237,6 @@ export class DonationsService {
     }
   }
 
-  // getMyDonations(customerId: string) {
-  //   return this.repo.findByCustomer(customerId);
-  // }
-
   async findAllAdmin(query: QueryDonationsDto) {
     const [data, total] = await this.repo.findAllAdmin(query);
     return {

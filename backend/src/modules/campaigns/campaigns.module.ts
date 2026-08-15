@@ -7,5 +7,6 @@ import { MediaRepository } from '../media/media.repository';
 @Module({
   controllers: [CampaignsController],
   providers: [CampaignsService, CampaignsRepository, MediaRepository],
+  exports: [CampaignsService],
 })
 export class CampaignsModule {}

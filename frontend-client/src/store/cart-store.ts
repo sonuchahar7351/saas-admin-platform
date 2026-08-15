@@ -31,6 +31,11 @@ interface CartState {
 
   baseAmount: number;
 
+  isRecurring: boolean;
+  recurringFrequency: "WEEKLY" | "MONTHLY" | "QUARTERLY" | null;
+  toggleRecurring: (on: boolean) => void;
+  setRecurringFrequency: (freq: "WEEKLY" | "MONTHLY" | "QUARTERLY") => void;
+
   initCampaign: (info: {
     id: string;
     slug: string;
@@ -83,6 +88,8 @@ export const useCartStore = create<CartState>()(
       grandTotal: 0,
       productPrice: 0,
       baseAmount: 0,
+      isRecurring: false,
+      recurringFrequency: null,
 
       initCampaign: (info) => {
         const current = get();
@@ -201,6 +208,11 @@ export const useCartStore = create<CartState>()(
         );
         set({ tipPercentage: pct, tipAmount, grandTotal });
       },
+
+      toggleRecurring: (on) =>
+        set({ isRecurring: on, recurringFrequency: on ? "MONTHLY" : null }),
+      setRecurringFrequency: (recurringFrequency) =>
+        set({ recurringFrequency }),
 
       clearCart: () =>
         set({

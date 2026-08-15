@@ -54,6 +54,8 @@ async function main() {
     { resource: 'eightyG', action: 'read' },
     { resource: 'eightyG', action: 'write' },
     { resource: 'donations', action: 'export' },
+    { resource: 'recurringDonations', action: 'read' },
+    { resource: 'recurringDonations', action: 'write' },
   ];
 
   for (const p of permissions) {
@@ -96,6 +98,7 @@ async function main() {
           'journey',
           'testimonials',
           'eightyG',
+          'recurringDonations',
         ],
       },
     },

@@ -25,6 +25,7 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { ReceiptsModule } from './modules/receipts/receipts.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { EightyGModule } from './modules/eighty-g/eighty-g.module';
+import { RecurringDonationsModule } from './modules/recurring-donations/recurring-donations.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { EightyGModule } from './modules/eighty-g/eighty-g.module';
     ReceiptsModule,
     CustomersModule,
     EightyGModule,
+    RecurringDonationsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
