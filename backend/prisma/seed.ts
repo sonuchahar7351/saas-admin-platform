@@ -56,6 +56,7 @@ async function main() {
     { resource: 'donations', action: 'export' },
     { resource: 'recurringDonations', action: 'read' },
     { resource: 'recurringDonations', action: 'write' },
+    { resource: 'recurringDonations', action: 'export' },
   ];
 
   for (const p of permissions) {

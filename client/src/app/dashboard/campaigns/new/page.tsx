@@ -21,6 +21,7 @@ function CreateCampaignContent() {
       shortDescription: values.shortDescription,
       cardImageId: values.cardImageId || undefined,
       expiryDate: new Date(values.expiryDate).toISOString(),
+      isAddress: values.isAddress,
       story: values.story,
       donationPresets: values.donationPresets.map((p) => ({
         amount: p.value,

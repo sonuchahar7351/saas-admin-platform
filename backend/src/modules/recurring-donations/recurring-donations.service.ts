@@ -9,6 +9,11 @@ import Razorpay from 'razorpay';
 import { RecurringDonationsRepository } from './recurring-donations.repository';
 import { SetupRecurringDto } from './dto/setup-recurring.dto';
 import { CustomerResolutionService } from '../customer-auth/customer-resolution.service';
+import {
+  ExportRecurringDto,
+  QueryRecurringDto,
+} from './dto/query-recurring.dto';
+import { buildRecurringWorkbook } from './excel-export.util';
 
 // Razorpay requires a finite total_count of billing cycles — there's no "forever" option.
 // We use a large-but-finite count per frequency (roughly a 5-year horizon) and let
@@ -143,14 +148,40 @@ export class RecurringDonationsService {
     return this.repo.updateStatus(id, 'CANCELLED', { cancelledAt: new Date() });
   }
 
-  findAllAdmin(query: { page: number; limit: number; status?: string }) {
-    return this.repo.findAllAdmin(query).then(([data, total]) => ({
+  async findAllAdmin(query: QueryRecurringDto) {
+    const [data, total] = await this.repo.findAllAdmin(query);
+    return {
       data,
       total,
       page: query.page,
       limit: query.limit,
       totalPages: Math.ceil(total / query.limit),
-    }));
+    };
+  }
+
+  async exportRecurring(dto: ExportRecurringDto) {
+    const where = this.repo.buildWhere(dto);
+    let items: any[];
+
+    if (dto.mode === 'bulk') {
+      items = await this.repo.findForExportBulk(where);
+    } else if (dto.mode === 'range') {
+      if (!dto.rangeStart || !dto.rangeEnd || dto.rangeEnd < dto.rangeStart) {
+        throw new BadRequestException('A valid range is required.');
+      }
+      items = await this.repo.findForExportRange(
+        where,
+        dto.rangeStart - 1,
+        dto.rangeEnd - dto.rangeStart + 1,
+      );
+    } else {
+      if (!dto.selectedIds?.length)
+        throw new BadRequestException('Select at least one row to export.');
+      const allMatching = await this.repo.findForExportBulk(where);
+      items = allMatching.filter((r) => dto.selectedIds!.includes(r.id));
+    }
+
+    return buildRecurringWorkbook(items);
   }
 
   async adminPause(id: string) {

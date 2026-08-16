@@ -16,6 +16,7 @@ export class RecurringDonationsRepository {
       },
     });
   }
+
   cachePlan(
     campaignId: string,
     amount: number,
@@ -63,18 +64,83 @@ export class RecurringDonationsRepository {
     });
   }
 
-  findAllAdmin(query: { page: number; limit: number; status?: string }) {
-    const where = query.status ? { status: query.status as any } : {};
+  buildWhere(filters: {
+    status?: string;
+    frequency?: string;
+    search?: string;
+  }) {
+    const { status, frequency, search } = filters;
+    return {
+      ...(status && { status: status as any }),
+      ...(frequency && { frequency: frequency as any }),
+      ...(search && {
+        OR: [
+          {
+            billing: {
+              donorName: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            billing: {
+              donorEmail: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            campaign: {
+              title: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            razorpaySubscriptionId: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          },
+        ],
+      }),
+    };
+  }
+
+  findAllAdmin(query: {
+    page: number;
+    limit: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+    status?: string;
+    frequency?: string;
+    search?: string;
+  }) {
+    const where = this.buildWhere(query);
     return Promise.all([
       this.prisma.recurringDonation.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [query.sortBy]: query.sortOrder },
         skip: (query.page - 1) * query.limit,
         take: query.limit,
-        include: { campaign: { select: { title: true } }, billing: true },
+        include: {
+          campaign: { select: { title: true, slug: true } },
+          billing: true,
+        },
       }),
       this.prisma.recurringDonation.count({ where }),
     ]);
+  }
+
+  findForExportBulk(where: any) {
+    return this.prisma.recurringDonation.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { campaign: { select: { title: true } }, billing: true },
+    });
+  }
+  findForExportRange(where: any, skip: number, take: number) {
+    return this.prisma.recurringDonation.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+      include: { campaign: { select: { title: true } }, billing: true },
+    });
   }
 
   createChargeDonation(data: any) {

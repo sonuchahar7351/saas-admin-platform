@@ -11,6 +11,10 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
+  const expressApp = app.getHttpAdapter().getInstance();
+
+  expressApp.set('query parser', 'extended');
+
   app.use(
     helmet({
       // Razorpay's checkout script + your own frontend origins need to load — default CSP would block them

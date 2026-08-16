@@ -21,6 +21,10 @@ import { Public } from '../../common/decorators/public.decorator';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
 import { OptionalCustomerAuthGuard } from '../../common/gaurds/optional-customer-auth.guard';
 import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guard';
+import {
+  ExportRecurringDto,
+  QueryRecurringDto,
+} from './dto/query-recurring.dto';
 
 @Controller('recurring-donations')
 export class RecurringDonationsController {
@@ -48,25 +52,32 @@ export class RecurringDonationsController {
     return this.service.getMyRecurring(req.user.customerId);
   }
 
+  @RequirePermission('recurringDonations', 'read')
+  @Get()
+  findAllAdmin(@Query() query: QueryRecurringDto) {
+    return this.service.findAllAdmin(query);
+  }
+
+  @RequirePermission('recurringDonations', 'export')
+  @Get('export')
+  async exportRecurring(
+    @Query() dto: ExportRecurringDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.service.exportRecurring(dto);
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="recurring-donations-${Date.now()}.xlsx"`,
+    });
+    res.send(buffer);
+  }
+
   @Public()
   @UseGuards(CustomerJwtAuthGuard)
   @Patch(':id/cancel')
   cancel(@Param('id') id: string, @Req() req: any) {
     return this.service.cancel(id, req.user.customerId);
-  }
-
-  @RequirePermission('recurringDonations', 'read')
-  @Get()
-  findAllAdmin(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('status') status?: string,
-  ) {
-    return this.service.findAllAdmin({
-      page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 10,
-      status,
-    });
   }
 
   @RequirePermission('recurringDonations', 'write')

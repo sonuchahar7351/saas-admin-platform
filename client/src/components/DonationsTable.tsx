@@ -86,18 +86,6 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
   const columns = useMemo(() => {
     const cols = [];
 
-    // hide the campaign column entirely when scoped to a single campaign — it's implied by context
-    if (!campaignId) {
-      cols.push(
-        columnHelper.accessor("campaign.slug", {
-          header: "Campaign",
-          cell: (info) => (
-            <span className="font-mono text-xs">{info.getValue()}</span>
-          ),
-        }),
-      );
-    }
-
     cols.push(
       columnHelper.display({
         id: "select",
@@ -116,6 +104,21 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
           />
         ),
       }),
+    );
+
+    // hide the campaign column entirely when scoped to a single campaign — it's implied by context
+    if (!campaignId) {
+      cols.push(
+        columnHelper.accessor("campaign.slug", {
+          header: "Campaign",
+          cell: (info) => (
+            <span className="font-mono text-xs">{info.getValue()}</span>
+          ),
+        }),
+      );
+    }
+
+    cols.push(
       columnHelper.accessor("amount", {
         header: "Amount",
         cell: (info) => `₹${(info.getValue() / 100).toLocaleString("en-IN")}`,

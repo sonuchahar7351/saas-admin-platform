@@ -32,7 +32,7 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <div className="flex h-screen">
-        <aside className="hidden sm:flex w-64 flex-col bg-sidebar-bg px-4 py-5 h-screen scrollbar-thin overflow-y-auto">
+        <aside className="w-64 flex-col bg-sidebar-bg px-4 py-5 h-screen scrollbar-thin overflow-y-auto">
           <div className="mb-8 flex items-center gap-2 px-2">
             <div className="h-6 w-6 rounded bg-accent" />
             <span className="font-display text-sm font-semibold text-white">
@@ -77,14 +77,10 @@ export default function DashboardLayout({
             </button>
           </div>
         </aside>
-        <div className="flex flex-1 flex-col">
-          <div className="border-b border-border bg-surface p-3 text-center text-xs text-text-secondary md:hidden">
-            For the best experience, use the admin panel on a larger screen.
-          </div>
-          <main className="flex-1 overflow-y-auto bg-bg p-4 md:p-8">
-            {children}
-          </main>
-        </div>
+
+        <main className="border-b border-border bg-surface p-3 text-center text-xs text-text-secondar overflow-y-auto">
+          {children}
+        </main>
       </div>
     </ProtectedRoute>
   );

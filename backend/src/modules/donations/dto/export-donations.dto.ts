@@ -25,5 +25,8 @@ export class ExportDonationsDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) rangeStart?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) rangeEnd?: number;
 
-  @IsOptional() @IsArray() @IsUUID('4', { each: true }) selectedIds?: string[];
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  selectedIds?: string[];
 }

@@ -63,7 +63,6 @@ export default async function CampaignDetailPage({
 }) {
   const { slug } = await params;
   const campaign: any = await getCampaign(slug);
-  console.log(campaign);
   if (!campaign) notFound();
 
   return <CampaignDetailClient campaign={campaign} />;
