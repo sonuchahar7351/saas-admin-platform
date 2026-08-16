@@ -16,6 +16,37 @@ export class CampaignsRepository {
     });
   }
 
+  findAllPaginated(query: {
+    status?: string;
+    categoryId?: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }) {
+    const { status, categoryId, search, page, limit } = query;
+    const where: any = {
+      ...(status && { status }),
+      ...(categoryId && { categoryId }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { slug: { contains: search, mode: 'insensitive' } },
+          { ngo: { name: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+    };
+    return Promise.all([
+      this.prisma.campaign.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { category: true, ngo: true },
+      }),
+      this.prisma.campaign.count({ where }),
+    ]);
+  }
+
   findById(id: string) {
     return this.prisma.campaign.findUnique({
       where: { id },

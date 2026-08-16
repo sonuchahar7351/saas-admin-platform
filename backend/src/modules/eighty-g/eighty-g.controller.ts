@@ -8,6 +8,9 @@ import {
   Query,
   UploadedFile,
   UseInterceptors,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EightyGService } from './eighty-g.service';
@@ -52,7 +55,15 @@ export class EightyGController {
   @UseInterceptors(FileInterceptor('certificate'))
   approve(
     @Param('id') id: string,
-    @UploadedFile() file: MulterFile,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10MB
+          new FileTypeValidator({ fileType: 'application/pdf' }),
+        ],
+      }),
+    )
+    file: MulterFile,
     @CurrentUser() user: any,
   ) {
     return this.service.approve(id, file, user.userId);

@@ -155,13 +155,32 @@ export class DonationsRepository {
     });
   }
 
-  findCampaignDonors(campaignId: string, limit = 20) {
-    return this.prisma.donation.findMany({
-      where: { campaignId, status: 'PAID' },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      include: { billing: true },
-    });
+  findCampaignDonorsPaginated(
+    campaignId: string,
+    page: number,
+    limit: number,
+    search?: string,
+  ) {
+    const where: any = {
+      campaignId,
+      status: 'PAID',
+      isAnonymous: false, // anonymous donors are excluded from the list entirely, not searchable either
+      ...(search && {
+        billing: {
+          donorName: { contains: search, mode: 'insensitive' as const },
+        },
+      }),
+    };
+    return Promise.all([
+      this.prisma.donation.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { billing: true },
+      }),
+      this.prisma.donation.count({ where }),
+    ]);
   }
 
   findPublicSummary(id: string) {

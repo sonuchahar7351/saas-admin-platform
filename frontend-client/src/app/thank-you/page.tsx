@@ -40,6 +40,28 @@ export default function ThankYouPage() {
     poll();
   }, [donationId]);
 
+  if (recurringId) {
+    return (
+      <div className="mx-auto max-w-md px-6 py-24 text-center">
+        <CheckCircle2 size={48} className="mx-auto text-accent" />
+        <h1 className="mt-4 font-heading text-2xl font-semibold">
+          Your recurring donation is set up
+        </h1>
+        <p className="mt-2 text-sm text-text-muted">
+          Thank you for committing to ongoing support. Your first charge will
+          process shortly, and future donations will follow your chosen schedule
+          automatically.
+        </p>
+        <Link
+          href="/account/recurring"
+          className="mt-6 inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white"
+        >
+          Manage recurring donations
+        </Link>
+      </div>
+    );
+  }
+
   if (!donationId) {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">

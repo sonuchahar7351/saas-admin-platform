@@ -21,7 +21,6 @@ function EditCampaignContent() {
   const [loading, setLoading] = useState(true);
 
   const loadCampaign = async () => {
-    // wrap the existing load logic in a named function so we can call it again after saving
     const { data: campaign } = await campaignsApi.getById(id as string);
     setRawCampaign(campaign); // ADD THIS
 

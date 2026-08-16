@@ -23,6 +23,7 @@ import { OptionalCustomerAuthGuard } from '../../common/gaurds/optional-customer
 import { CreateDonationDto } from './dto/create-donation-order.dto';
 import { VerifyDonationDto } from './dto/verify-donation.dto';
 import { ExportDonationsDto } from './dto/export-donations.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('donations')
 export class DonationsController {
@@ -44,6 +45,7 @@ export class DonationsController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @UseGuards(OptionalCustomerAuthGuard)
   @Post('create-order')
   createOrder(@Body() dto: CreateDonationDto, @Req() req: any) {
@@ -112,8 +114,18 @@ export class DonationsController {
 
   @Public()
   @Get('public/campaign/:campaignId/donors')
-  getCampaignDonors(@Param('campaignId') campaignId: string) {
-    return this.service.getCampaignDonors(campaignId);
+  getCampaignDonors(
+    @Param('campaignId') campaignId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.service.getCampaignDonors(
+      campaignId,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 10,
+      search,
+    );
   }
 
   @RequirePermission('donations', 'read')

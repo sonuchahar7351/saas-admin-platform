@@ -18,7 +18,10 @@ import {
   RichEditorHandle,
 } from "../../../../../../components/editor/RichEditor";
 import { MediaPickerModal } from "../../../../../../components/media/MediaPickerModal";
+
 import { useRef } from "react";
+import { Upload, Loader2 } from "lucide-react";
+import { mediaApi } from "../../../../../../lib/media-api";
 
 function GlimpseSection({
   update,
@@ -29,12 +32,16 @@ function GlimpseSection({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeGlimpseId, setActiveGlimpseId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTargetGlimpseId, setUploadTargetGlimpseId] = useState<
+    string | null
+  >(null);
 
   const handleNewGlimpse = () => {
-    setActiveGlimpseId(null); // null = creating a fresh glimpse
+    setActiveGlimpseId(null);
     setPickerOpen(true);
   };
-
   const handleAddToExisting = (glimpseId: string) => {
     setActiveGlimpseId(glimpseId);
     setPickerOpen(true);
@@ -42,12 +49,34 @@ function GlimpseSection({
 
   const handleSelect = async (items: { id: string }[]) => {
     const mediaIds = items.map((i) => i.id);
-    if (activeGlimpseId) {
+    if (activeGlimpseId)
       await updatesApi.addGlimpseImages(activeGlimpseId, mediaIds);
-    } else {
-      await updatesApi.createGlimpse(update.id, mediaIds);
-    }
+    else await updatesApi.createGlimpse(update.id, mediaIds);
     onRefresh();
+  };
+
+  // direct upload — bypasses the library browser entirely for the common "just add these photos" case
+  const triggerDirectUpload = (glimpseId: string | null) => {
+    setUploadTargetGlimpseId(glimpseId);
+    fileInputRef.current?.click();
+  };
+
+  const handleDirectUpload = async (files: FileList) => {
+    setUploading(true);
+    try {
+      const { data: uploaded } = await mediaApi.bulkUpload(
+        Array.from(files),
+        "GALLERY",
+      );
+      const mediaIds = uploaded.map((m: any) => m.id);
+      if (uploadTargetGlimpseId)
+        await updatesApi.addGlimpseImages(uploadTargetGlimpseId, mediaIds);
+      else await updatesApi.createGlimpse(update.id, mediaIds);
+      onRefresh();
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleDeleteGlimpse = async (id: string) => {
@@ -63,16 +92,39 @@ function GlimpseSection({
 
   return (
     <div className="mt-3 border-t border-border pt-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => e.target.files && handleDirectUpload(e.target.files)}
+      />
+
       <div className="mb-2 flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wide text-text-secondary">
           Glimpses
         </p>
-        <button
-          onClick={handleNewGlimpse}
-          className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
-        >
-          <Plus size={12} /> Add glimpse
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => triggerDirectUpload(null)}
+            disabled={uploading}
+            className="flex items-center gap-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
+          >
+            {uploading ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Upload size={12} />
+            )}{" "}
+            Upload new
+          </button>
+          <button
+            onClick={handleNewGlimpse}
+            className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+          >
+            <Plus size={12} /> From library
+          </button>
+        </div>
       </div>
 
       {update.glimpses.length === 0 ? (
@@ -87,8 +139,17 @@ function GlimpseSection({
                 </span>
                 <div className="flex gap-2">
                   <button
+                    onClick={() => triggerDirectUpload(g.id)}
+                    disabled={uploading}
+                    className="text-text-secondary hover:text-accent"
+                    title="Upload more"
+                  >
+                    <Upload size={14} />
+                  </button>
+                  <button
                     onClick={() => handleAddToExisting(g.id)}
                     className="text-text-secondary hover:text-accent"
+                    title="Add from library"
                   >
                     <ImagePlus size={14} />
                   </button>

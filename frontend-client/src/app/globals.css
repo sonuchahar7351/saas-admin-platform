@@ -34,6 +34,8 @@
 }
 
 html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
   transition: background-color 0.2s ease;
 }
 body {
@@ -41,7 +43,44 @@ body {
   color: var(--color-text);
 }
 
-.ProseMirror {
+/* WebKit (Chrome, Safari, Edge) — applies to every scrollable element, including the main page */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px; /* horizontal scrollbars too, e.g. the media picker's image grid */
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* Firefox */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* WebKit (Chrome, Safari, Edge) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* .ProseMirror {
   outline: none;
   min-height: 220px;
   padding: 1rem;
@@ -113,7 +152,84 @@ body {
   float: left;
   height: 0;
   pointer-events: none;
+} */
+
+.prose-story {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-text);
 }
+.prose-story h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+}
+.prose-story h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+.prose-story h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.875rem 0 0.5rem;
+}
+.prose-story p {
+  margin: 0.5rem 0;
+}
+.prose-story ul,
+.prose-story ol {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.prose-story blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1rem;
+  color: var(--color-text-muted);
+  margin: 0.75rem 0;
+}
+.prose-story pre {
+  background: #14181f;
+  color: #e5e7eb;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+}
+.prose-story hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.25rem 0;
+}
+.prose-story img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+.prose-story table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75rem 0;
+}
+.prose-story td,
+.prose-story th {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+.prose-story a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+.prose-story .callout {
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+  background: var(--color-bg);
+  border-left: 3px solid var(--color-accent);
+}
+
 .callout {
   border-radius: 8px;
   padding: 0.75rem 1rem;

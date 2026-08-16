@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PermissionsCacheService } from '../permissions-cache/permissions-cache.service';
 import {
   PERMISSION_KEY,
   RequiredPermission,
@@ -16,12 +16,10 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private prisma: PrismaService,
+    private cache: PermissionsCacheService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // check @Public() FIRST, same as JwtAuthGuard does — a public route should
-    // never be subject to a permission check, regardless of what its controller declares
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -35,18 +33,18 @@ export class PermissionsGuard implements CanActivate {
     if (!required) return true;
 
     const { user } = context.switchToHttp().getRequest();
-    if (!user) return true; // no permission context to check — nothing to enforce here
-
+    if (!user) return true;
     if (user.role === 'SUPER_ADMIN') return true;
 
-    const hasPermission = await this.prisma.rolePermission.findFirst({
-      where: {
-        role: { name: user.role },
-        permission: { resource: required.resource, action: required.action },
-      },
-    });
+    const key = `${required.resource}:${required.action}`;
 
-    if (!hasPermission) {
+    // both cache reads happen in parallel — no reason to serialize two independent lookups
+    const [rolePerms, userPerms] = await Promise.all([
+      this.cache.getRolePermissions(user.role),
+      this.cache.getUserPermissions(user.userId),
+    ]);
+
+    if (!rolePerms.has(key) && !userPerms.has(key)) {
       throw new ForbiddenException(
         `Missing permission: ${required.action} on ${required.resource}`,
       );

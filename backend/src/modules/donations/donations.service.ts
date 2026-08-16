@@ -10,6 +10,7 @@ import { ReceiptsService } from '../receipts/receipts.service';
 import { VerifyDonationDto } from './dto/verify-donation.dto';
 import { ExportDonationsDto } from './dto/export-donations.dto';
 import { buildDonationsWorkbook } from './excel-export.util';
+import { ReceiptsQueueService } from '../../queues/receipts/receipts-queue.service';
 
 @Injectable()
 export class DonationsService {
@@ -17,7 +18,7 @@ export class DonationsService {
 
   constructor(
     private repo: DonationsRepository,
-    private receiptsService: ReceiptsService,
+    private receiptsQueue: ReceiptsQueueService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -178,13 +179,7 @@ export class DonationsService {
       donation.amount,
     );
 
-    // fire-and-forget style, but logged — a failed receipt shouldn't fail the payment webhook response
-    this.receiptsService.generateForDonation(donation.id).catch((err) => {
-      console.error(
-        `Receipt generation failed for donation ${donation.id}:`,
-        err,
-      );
-    });
+    await this.receiptsQueue.queueGenerate(donation.id);
 
     if (updatedDonation && updatedCampaign) {
       return {
@@ -221,12 +216,7 @@ export class DonationsService {
         donation.amount,
       );
       // fire-and-forget style, but logged — a failed receipt shouldn't fail the payment webhook response
-      this.receiptsService.generateForDonation(donation.id).catch((err) => {
-        console.error(
-          `Receipt generation failed for donation ${donation.id}:`,
-          err,
-        );
-      });
+      await this.receiptsQueue.queueGenerate(donation.id);
     }
 
     if (eventType === 'payment.failed') {
@@ -287,14 +277,30 @@ export class DonationsService {
     return { message: 'Refund initiated' };
   }
 
-  async getCampaignDonors(campaignId: string) {
-    const donations = await this.repo.findCampaignDonors(campaignId);
-    return donations.map((d) => ({
-      donorName: d.isAnonymous ? 'Anonymous' : d.billing.donorName,
-      amount: d.amount,
-      message: d.message,
-      createdAt: d.createdAt,
-    }));
+  async getCampaignDonors(
+    campaignId: string,
+    page = 1,
+    limit = 10,
+    search?: string,
+  ) {
+    const [donations, total] = await this.repo.findCampaignDonorsPaginated(
+      campaignId,
+      page,
+      limit,
+      search,
+    );
+    return {
+      data: donations.map((d) => ({
+        donorName: d.billing.donorName,
+        amount: d.amount,
+        message: d.message,
+        createdAt: d.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getPublicSummary(id: string) {

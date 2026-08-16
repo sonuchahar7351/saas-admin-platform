@@ -142,78 +142,80 @@ function CustomersContent() {
       </form>
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            {table.getHeaderGroups().map((hg) => (
-              <tr
-                key={hg.id}
-                className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-secondary"
-              >
-                {hg.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    onClick={
-                      header.column.getCanSort()
-                        ? header.column.getToggleSortingHandler()
-                        : undefined
-                    }
-                    className={`px-5 py-3 font-medium ${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
-                  >
-                    <div className="flex items-center gap-1">
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                      {header.column.getIsSorted() === "asc" && (
-                        <ChevronUp size={12} />
-                      )}
-                      {header.column.getIsSorted() === "desc" && (
-                        <ChevronDown size={12} />
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-5 py-10 text-center text-text-secondary"
-                >
-                  Loading…
-                </td>
-              </tr>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-5 py-10 text-center text-text-secondary"
-                >
-                  No customers found.
-                </td>
-              </tr>
-            ) : (
-              table.getRowModel().rows.map((row) => (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              {table.getHeaderGroups().map((hg) => (
                 <tr
-                  key={row.id}
-                  className="border-b border-border last:border-0 hover:bg-bg"
+                  key={hg.id}
+                  className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-secondary"
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-5 py-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </td>
+                  {hg.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      onClick={
+                        header.column.getCanSort()
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
+                      className={`px-5 py-3 font-medium ${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                    >
+                      <div className="flex items-center gap-1">
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {header.column.getIsSorted() === "asc" && (
+                          <ChevronUp size={12} />
+                        )}
+                        {header.column.getIsSorted() === "desc" && (
+                          <ChevronDown size={12} />
+                        )}
+                      </div>
+                    </th>
                   ))}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-5 py-10 text-center text-text-secondary"
+                  >
+                    Loading…
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-5 py-10 text-center text-text-secondary"
+                  >
+                    No customers found.
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="border-b border-border last:border-0 hover:bg-bg"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-5 py-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {data && (

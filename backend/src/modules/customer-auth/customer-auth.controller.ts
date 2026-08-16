@@ -17,6 +17,7 @@ import { CustomerJwtAuthGuard } from '../../common/gaurds/customer-jwt-auth.guar
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('customer-auth')
 export class CustomerAuthController {
@@ -45,6 +46,7 @@ export class CustomerAuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -89,6 +91,7 @@ export class CustomerAuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   forgotPassword(@Body() dto: ForgotPasswordDto) {

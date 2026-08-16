@@ -111,57 +111,59 @@ export default function UsersPage() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-[#FAFAFB] text-left text-xs uppercase tracking-wide text-text-secondary">
-                <th className="px-5 py-3 font-medium">Name</th>
-                <th className="px-5 py-3 font-medium">Role</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium">Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr
-                  key={u.id}
-                  className="border-b border-border last:border-0 hover:bg-[#FAFAFB]"
-                >
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={u.name} />
-                      <div>
-                        <p className="font-medium">{u.name}</p>
-                        <p className="font-mono text-xs text-text-secondary">
-                          {u.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
-                    <RoleBadge role={u.role.name} />
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="flex items-center gap-1.5 text-xs text-text-secondary">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{
-                          backgroundColor: u.isActive ? "#16A34A" : "#9CA3AF",
-                        }}
-                      />
-                      {u.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 font-mono text-xs text-text-secondary">
-                    {new Date(u.createdAt).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-[#FAFAFB] text-left text-xs uppercase tracking-wide text-text-secondary">
+                  <th className="px-5 py-3 font-medium">Name</th>
+                  <th className="px-5 py-3 font-medium">Role</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Joined</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((u) => (
+                  <tr
+                    key={u.id}
+                    className="border-b border-border last:border-0 hover:bg-[#FAFAFB]"
+                  >
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={u.name} />
+                        <div>
+                          <p className="font-medium">{u.name}</p>
+                          <p className="font-mono text-xs text-text-secondary">
+                            {u.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <RoleBadge role={u.role.name} />
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{
+                            backgroundColor: u.isActive ? "#16A34A" : "#9CA3AF",
+                          }}
+                        />
+                        {u.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 font-mono text-xs text-text-secondary">
+                      {new Date(u.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

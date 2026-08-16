@@ -3,9 +3,36 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  app.use(
+    helmet({
+      // Razorpay's checkout script + your own frontend origins need to load — default CSP would block them
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          scriptSrc: [
+            `'self'`,
+            `'unsafe-inline'`,
+            'https://checkout.razorpay.com',
+          ],
+          frameSrc: [
+            'https://api.razorpay.com',
+            'https://checkout.razorpay.com',
+          ],
+          connectSrc: [`'self'`, 'https://api.razorpay.com'],
+          imgSrc: [`'self'`, 'data:', 'https:'], // allows S3/MinIO-hosted images
+        },
+      },
+      crossOriginEmbedderPolicy: false, // Razorpay's iframe checkout needs this relaxed
+    }),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -73,65 +73,69 @@ function NgosContent() {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-secondary">
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Email</th>
-              <th className="px-5 py-3 font-medium">Active</th>
-              <th className="px-5 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((n) => (
-              <tr
-                key={n.id}
-                className="border-b border-border last:border-0 hover:bg-bg"
-              >
-                <td className="px-5 py-3 font-medium">{n.name}</td>
-                <td className="px-5 py-3 text-text-secondary">
-                  {n.email || "—"}
-                </td>
-                <td className="px-5 py-3">
-                  <button
-                    onClick={() =>
-                      ngosApi.update(n.id, { isActive: !n.isActive }).then(load)
-                    }
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${n.isActive ? "bg-emerald-50 text-emerald-600" : "bg-bg text-text-secondary"}`}
-                  >
-                    {n.isActive ? "Active" : "Inactive"}
-                  </button>
-                </td>
-                <td className="px-5 py-3">
-                  <div className="flex justify-end gap-1">
-                    <button
-                      onClick={() => setEditing(n)}
-                      className="rounded-md p-1.5 hover:bg-bg"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(n.id)}
-                      className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-bg text-left text-xs uppercase tracking-wide text-text-secondary">
+                <th className="px-5 py-3 font-medium">Name</th>
+                <th className="px-5 py-3 font-medium">Email</th>
+                <th className="px-5 py-3 font-medium">Active</th>
+                <th className="px-5 py-3"></th>
               </tr>
-            ))}
-            {items.length === 0 && (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-5 py-10 text-center text-text-secondary"
+            </thead>
+            <tbody>
+              {items.map((n) => (
+                <tr
+                  key={n.id}
+                  className="border-b border-border last:border-0 hover:bg-bg"
                 >
-                  No NGOs yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  <td className="px-5 py-3 font-medium">{n.name}</td>
+                  <td className="px-5 py-3 text-text-secondary">
+                    {n.email || "—"}
+                  </td>
+                  <td className="px-5 py-3">
+                    <button
+                      onClick={() =>
+                        ngosApi
+                          .update(n.id, { isActive: !n.isActive })
+                          .then(load)
+                      }
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${n.isActive ? "bg-emerald-50 text-emerald-600" : "bg-bg text-text-secondary"}`}
+                    >
+                      {n.isActive ? "Active" : "Inactive"}
+                    </button>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => setEditing(n)}
+                        className="rounded-md p-1.5 hover:bg-bg"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(n.id)}
+                        className="rounded-md p-1.5 text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-5 py-10 text-center text-text-secondary"
+                  >
+                    No NGOs yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {editing && (

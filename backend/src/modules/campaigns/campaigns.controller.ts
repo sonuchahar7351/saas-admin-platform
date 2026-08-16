@@ -17,6 +17,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FeatureCampaignDto } from './dto/feature-campaign.dto';
 import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
+import { QueryAdminCampaignsDto } from './dto/query-admin-campaigns.dto';
 
 @Controller('campaigns')
 export class CampaignsController {
@@ -43,11 +44,8 @@ export class CampaignsController {
 
   @RequirePermission('campaigns', 'read')
   @Get()
-  findAll(
-    @Query('status') status?: string,
-    @Query('categoryId') categoryId?: string,
-  ) {
-    return this.service.findAll({ status, categoryId });
+  findAll(@Query() query: QueryAdminCampaignsDto) {
+    return this.service.findAllAdmin(query);
   }
 
   @RequirePermission('campaigns', 'read')

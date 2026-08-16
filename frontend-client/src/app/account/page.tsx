@@ -12,6 +12,7 @@ import {
 } from "../../lib/donations-api";
 import { DonationStatusBadge } from "../../components/DonationStatusBadge";
 import { DonationDetailPanel } from "../../components/DonationDetailPanel";
+import Link from "next/link";
 
 export default function AccountPage() {
   const { customer, clearAuth, isLoading } = useCustomerAuthStore();
@@ -82,6 +83,12 @@ export default function AccountPage() {
             Donation history
           </h2>
           <p className="text-sm text-text-muted">{total} total</p>
+          <Link
+            href="/account/recurring"
+            className="text-sm font-medium text-accent hover:underline"
+          >
+            Manage recurring donations
+          </Link>
         </div>
 
         {loading ? (

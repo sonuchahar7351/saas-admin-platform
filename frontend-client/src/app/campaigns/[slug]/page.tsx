@@ -1,131 +1,70 @@
-"use client";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { serverFetch } from "../../../lib/server-api";
+import { CampaignDetailClient } from "@/components/campaign/CampaignClientDetail";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { StoryRenderer } from "../../../components/StoryRenderer";
-import { CampaignGallery } from "../../../components/campaign/CampaignGallery";
-import { DonorList } from "../../../components/campaign/DonorList";
-import { ProductsSection } from "../../../components/campaign/ProductsSection";
-import { CampaignTestimonials } from "../../../components/campaign/CampaignTestimonials";
-import { UpdatesTimeline } from "../../../components/campaign/UpdatesTimeline";
-import { JourneyTimeline } from "../../../components/campaign/JourneyTimeline";
-import { campaignsApi } from "@/lib/campaigs-api";
-import { DonationSelector } from "@/components/campaign/DonationSelector";
-import { useCartStore } from "@/store/cart-store";
+export const revalidate = 60; // ISR — regenerate at most once per minute per campaign
 
-export default function CampaignDetailPage() {
-  const { slug } = useParams();
-  const [campaign, setCampaign] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const initCampaign = useCartStore((s) => s.initCampaign);
+interface CampaignData {
+  id: string;
+  title: string;
+  slug: string;
+  shortDescription: string;
+  goalAmount: number;
+  raisedAmount: number;
+  expiryDate: string;
+  cardImageUrl: string | null;
+  bannerImageUrls: string[];
+  category: { id: string; name: string };
+  ngo: { id: string; name: string };
+  story: any;
+  isAddress: boolean;
+  donationPresets: { amount: number; isDefault: boolean }[];
+  tipPresets: { percentage: number; isDefault: boolean }[];
+}
 
-  useEffect(() => {
-    campaignsApi.getBySlug(slug as string).then(({ data }) => {
-      setCampaign(data[0]);
-      setLoading(false);
-      initCampaign({
-        id: data[0].id,
-        slug: data[0].slug,
-        title: data[0].title,
-        tipPresets: data[0].tipPresets,
-        isAddress: data[0].isAddress,
-      });
-    });
-  }, [slug]);
+async function getCampaign(slug: string) {
+  return serverFetch<CampaignData>(`/campaigns/public/${slug}`, 60);
+}
 
-  if (loading)
-    return <p className="p-16 text-center text-sm text-text-muted">Loading…</p>;
-  if (!campaign)
-    return (
-      <p className="p-16 text-center text-sm text-text-muted">
-        Campaign not found.
-      </p>
-    );
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const campaign: any = await getCampaign(slug);
+  if (!campaign) return { title: "Campaign not found" };
 
-  const percent = Math.min(
-    100,
-    Math.round((campaign.raisedAmount / campaign.goalAmount) * 100),
-  );
-  const galleryImages = [
-    campaign.cardImageUrl,
-    ...(campaign.bannerImageUrls || []),
-  ].filter(Boolean);
+  return {
+    title: `${campaign.title} | GiveForward`,
+    description: campaign.shortDescription,
+    openGraph: {
+      title: campaign.title,
+      description: campaign.shortDescription,
+      images: campaign.cardImageUrl
+        ? [{ url: campaign.cardImageUrl, width: 1200, height: 630 }]
+        : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: campaign.title,
+      description: campaign.shortDescription,
+      images: campaign.cardImageUrl ? [campaign.cardImageUrl] : [],
+    },
+  };
+}
 
-  return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <CampaignGallery images={galleryImages} />
+export default async function CampaignDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const campaign: any = await getCampaign(slug);
+  console.log(campaign);
+  if (!campaign) notFound();
 
-      <div className="mt-4 grid gap-10 lg:grid-cols-[1fr_360px]">
-        <div className="sm:space-y-10 space-y-4">
-          <div>
-            <span className="font-mono text-xs uppercase tracking-wide text-accent">
-              {campaign.category.name}
-            </span>
-            <h1 className="mt-1 font-heading text-2xl font-semibold sm:text-3xl">
-              {campaign.title}
-            </h1>
-            <p className="mt-1 text-sm text-text-muted">
-              by {campaign.ngo.name}
-            </p>
-          </div>
-
-          <div className="block sm:hidden space-y-4">
-            <div className="rounded-2xl border border-border bg-surface p-5">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EDEBE4]">
-                <div
-                  className="h-full rounded-full bg-accent"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-              <div className="mt-3 flex items-baseline gap-1.5">
-                <span className="font-heading text-2xl font-semibold">
-                  ₹{(campaign.raisedAmount / 100).toLocaleString("en-IN")}
-                </span>
-                <span className="text-sm text-text-muted">
-                  raised of ₹
-                  {(campaign.goalAmount / 100).toLocaleString("en-IN")}
-                </span>
-              </div>
-            </div>
-            <DonationSelector campaign={campaign} />
-          </div>
-
-          {campaign.story && (
-            <div>
-              <h4 className="text-xl font-bold">Story</h4>
-              <StoryRenderer content={campaign.story} />
-            </div>
-          )}
-
-          <ProductsSection campaignId={campaign.id} />
-          <JourneyTimeline campaignId={campaign.id} />
-          <UpdatesTimeline campaignId={campaign.id} />
-          <CampaignTestimonials campaignId={campaign.id} />
-        </div>
-
-        <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-border bg-surface p-5 hidden sm:block">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EDEBE4]">
-              <div
-                className="h-full rounded-full bg-accent"
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-            <div className="mt-3 flex items-baseline gap-1.5">
-              <span className="font-heading text-2xl font-semibold">
-                ₹{(campaign.raisedAmount / 100).toLocaleString("en-IN")}
-              </span>
-              <span className="text-sm text-text-muted">
-                raised of ₹{(campaign.goalAmount / 100).toLocaleString("en-IN")}
-              </span>
-            </div>
-          </div>
-          <div className="hidden sm:block">
-            <DonationSelector campaign={campaign} />
-          </div>
-          <DonorList campaignId={campaign.id} />
-        </div>
-      </div>
-    </div>
-  );
+  return <CampaignDetailClient campaign={campaign} />;
 }

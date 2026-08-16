@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { DonationsController } from './donations.controller';
 import { DonationsService } from './donations.service';
 import { DonationsRepository } from './donations.repository';
-import { ReceiptsModule } from '../receipts/receipts.module';
+import { ReceiptsQueueModule } from '../../queues/receipts/receipts-queue.module';
 
 @Module({
-  imports: [ReceiptsModule],
+  imports: [ReceiptsQueueModule],
   controllers: [DonationsController],
   providers: [DonationsService, DonationsRepository],
 })

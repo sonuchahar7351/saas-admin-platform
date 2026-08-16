@@ -9,14 +9,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { CustomerLoginDto } from './dto/login.dto';
 import * as crypto from 'crypto';
-import { EmailService } from './email.service';
+import { EmailQueueService } from '../../queues/email/email-queue.service';
 
 @Injectable()
 export class CustomerAuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private emailService: EmailService,
+    private emailQueue: EmailQueueService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -135,7 +135,7 @@ export class CustomerAuthService {
       });
 
       const resetLink = `${process.env.FRONTEND_RESET_URL}?token=${rawToken}`;
-      await this.emailService.sendPasswordResetEmail(customer.email, resetLink);
+      await this.emailQueue.queuePasswordReset(customer.email, resetLink);
     }
 
     // identical response whether or not the email exists — prevents account enumeration

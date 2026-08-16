@@ -1,35 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Users, Heart, IndianRupee, CheckCircle2 } from "lucide-react";
-import { statsApi } from "../lib/stats-api";
 import { formatIndianCompact, formatCount } from "../lib/format";
 
-export function StatsSection() {
-  const [stats, setStats] = useState<any>(null);
-
-  useEffect(() => {
-    statsApi.getPublic().then(({ data }) => setStats(data));
-  }, []);
-
-  if (!stats) return null;
+export function StatsSection({ initialStats }: { initialStats: any }) {
+  if (!initialStats) return null;
 
   const items = [
-    { icon: Users, label: "Donors", value: formatCount(stats.totalDonors) },
+    {
+      icon: Users,
+      label: "Donors",
+      value: formatCount(initialStats.totalDonors),
+    },
     {
       icon: IndianRupee,
       label: "Funds Raised",
-      value: formatIndianCompact(stats.totalRaised),
+      value: formatIndianCompact(initialStats.totalRaised),
     },
     {
       icon: Heart,
       label: "Campaigns",
-      value: formatCount(stats.totalCampaigns),
+      value: formatCount(initialStats.totalCampaigns),
     },
     {
       icon: CheckCircle2,
       label: "Completed",
-      value: formatCount(stats.completedCampaigns),
+      value: formatCount(initialStats.completedCampaigns),
     },
   ];
 

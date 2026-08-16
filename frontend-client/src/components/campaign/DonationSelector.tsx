@@ -85,9 +85,7 @@ export function DonationSelector({ campaign }: { campaign: PublicCampaign }) {
 
       {isRecurring && (
         <div className="mt-2">
-          <p className="mb-1.5 text-xs text-text-muted">
-            7-day free trial — no charge until it's activated.
-          </p>
+          <p className="mb-1.5 text-xs text-text-muted">Recurring frequency</p>
           <div className="flex gap-2">
             {(["WEEKLY", "MONTHLY", "QUARTERLY"] as const).map((f) => (
               <button

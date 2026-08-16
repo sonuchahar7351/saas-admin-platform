@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const { data } = await customerAuthApi.login(email, password);
       setAuth(data.customer, data.accessToken);
-      router.push("/pricing");
+      router.push("/");
     } catch {
       setError("That email or password doesn't match our records.");
     } finally {

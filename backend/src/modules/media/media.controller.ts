@@ -9,6 +9,9 @@ import {
   UploadedFile,
   UseInterceptors,
   UploadedFiles,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
@@ -26,13 +29,20 @@ export class MediaController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   upload(
-    @UploadedFile() file: MulterFile,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB cap
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|gif)$/ }),
+        ],
+      }),
+    )
+    file: MulterFile,
     @Body() dto: UploadMediaDto,
     @CurrentUser() user: any,
   ) {
     return this.service.upload(file, dto, user.userId);
   }
-
   @RequirePermission('media', 'read')
   @Get()
   findAll(
@@ -58,7 +68,15 @@ export class MediaController {
   @Post('bulk-upload')
   @UseInterceptors(FilesInterceptor('files', 20))
   bulkUpload(
-    @UploadedFiles() files: MulterFile[],
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|gif)$/ }),
+        ],
+      }),
+    )
+    files: MulterFile[],
     @Body() dto: UploadMediaDto,
     @CurrentUser() user: any,
   ) {

@@ -5,15 +5,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { EightyGRepository } from './eighty-g.repository';
-import { EmailService } from '../customer-auth/email.service';
 import { S3Service } from '../media/s3.service';
 import { ApplyEightyGDto } from './dto/eighty-g.dto';
+import { EmailQueueService } from '../../queues/email/email-queue.service';
 
 @Injectable()
 export class EightyGService {
   constructor(
     private repo: EightyGRepository,
-    private emailService: EmailService,
+    private emailQueue: EmailQueueService,
     private s3: S3Service,
   ) {}
 
@@ -95,7 +95,7 @@ export class EightyGService {
     );
 
     const updated = await this.repo.approve(id, url, reviewedById);
-    await this.emailService.sendCertificateEmail(
+    await this.emailQueue.queueCertificateApproved(
       application.email,
       application.fullName,
       url,
@@ -113,7 +113,7 @@ export class EightyGService {
     }
 
     const updated = await this.repo.reject(id, reason, reviewedById);
-    await this.emailService.sendApplicationRejectedEmail(
+    await this.emailQueue.queueCertificateRejected(
       application.email,
       application.fullName,
       reason,

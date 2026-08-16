@@ -44,9 +44,24 @@ export interface CampaignDetail extends CampaignRecord {
   tipPresets: { percentage: number; isDefault: boolean }[];
 }
 
+export interface AdminCampaignsQuery {
+  status?: string;
+  categoryId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+export interface PaginatedAdminCampaigns {
+  data: CampaignRecord[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const campaignsApi = {
-  getAll: (params?: { status?: string; categoryId?: string }) =>
-    apiClient.get<CampaignRecord[]>("/campaigns", { params }),
+  getAll: (query?: AdminCampaignsQuery) =>
+    apiClient.get<PaginatedAdminCampaigns>("/campaigns", { params: query }),
   changeStatus: (id: string, status: string) =>
     apiClient.patch(`/campaigns/${id}/status`, { status }),
   duplicate: (id: string) => apiClient.post(`/campaigns/${id}/duplicate`),

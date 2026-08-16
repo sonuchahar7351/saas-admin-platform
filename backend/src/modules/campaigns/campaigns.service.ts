@@ -104,16 +104,31 @@ export class CampaignsService {
     ) {
       return null;
     }
-    // const cardImage = campaign.cardImageId
-    //   ? await this.mediaRepo.findById(campaign.cardImageId)
-    //   : null;
-    // return { ...campaign, cardImageUrl: cardImage?.url || null };
-    return this.attachImageUrls([campaign]);
+    const [withImages] = await this.attachImageUrls([campaign]);
+    return withImages;
   }
 
   async findAll(filters: { status?: string; categoryId?: string }) {
     const campiangs = await this.repo.findAll(filters);
     return this.attachImageUrls(campiangs);
+  }
+
+  async findAllAdmin(query: {
+    status?: string;
+    categoryId?: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }) {
+    const [data, total] = await this.repo.findAllPaginated(query);
+    const withImages = await this.attachImageUrls(data);
+    return {
+      data: withImages,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
   }
 
   async findById(id: string) {

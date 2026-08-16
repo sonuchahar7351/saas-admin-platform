@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './common/gaurds/jwt.gaurd';
@@ -26,9 +27,18 @@ import { ReceiptsModule } from './modules/receipts/receipts.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { EightyGModule } from './modules/eighty-g/eighty-g.module';
 import { RecurringDonationsModule } from './modules/recurring-donations/recurring-donations.module';
+import { QueuesModule } from './queues/queues.module';
+import { EmailQueueModule } from './queues/email/email-queue.module';
+import { ReceiptsQueueModule } from './queues/receipts/receipts-queue.module';
+import { EmailModule } from './modules/email/email.module';
+import { RedisModule } from './modules/radis/radic.module';
+import { PermissionsCacheModule } from './common/permissions-cache/permissions-cache.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    RedisModule,
+    PermissionsCacheModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -51,8 +61,13 @@ import { RecurringDonationsModule } from './modules/recurring-donations/recurrin
     CustomersModule,
     EightyGModule,
     RecurringDonationsModule,
+    QueuesModule,
+    EmailQueueModule,
+    ReceiptsQueueModule,
+    EmailModule,
   ],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
