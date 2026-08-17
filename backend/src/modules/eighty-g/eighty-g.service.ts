@@ -8,6 +8,7 @@ import { EightyGRepository } from './eighty-g.repository';
 import { S3Service } from '../media/s3.service';
 import { ApplyEightyGDto } from './dto/eighty-g.dto';
 import { EmailQueueService } from '../../queues/email/email-queue.service';
+import { DuplicateResourceException } from '../../common/exceptions/app-exceptions';
 
 @Injectable()
 export class EightyGService {
@@ -29,7 +30,7 @@ export class EightyGService {
     // friendly pre-check — the @unique constraint on donationId is the real guarantee against a race
     const existing = await this.repo.findByDonationId(dto.donationId);
     if (existing) {
-      throw new ConflictException(
+      throw new DuplicateResourceException(
         'You have already applied for an 80G certificate for this donation.',
       );
     }

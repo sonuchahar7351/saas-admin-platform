@@ -78,7 +78,7 @@ export default function DashboardLayout({
           </div>
         </aside>
 
-        <main className="border-b border-border bg-surface p-3 text-center text-xs text-text-secondar overflow-y-auto">
+        <main className="w-full border-b border-border bg-surface p-3 text-center text-xs text-text-secondar overflow-y-auto">
           {children}
         </main>
       </div>

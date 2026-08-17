@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { AppException } from '../exceptions/app-exceptions';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -37,9 +38,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
     }
 
+    const isAppException = exception instanceof AppException;
+
     response.status(status).json({
       statusCode: status,
       message,
+      ...(isAppException && { code: (exception as AppException).code }),
       path: request.url,
       timestamp: new Date().toISOString(),
     });

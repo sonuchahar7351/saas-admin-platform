@@ -6,7 +6,7 @@ export function silentRefresh() {
   if (!refreshPromise) {
     refreshPromise = axios
       .post(
-        `${process.env.NEXT_PUBLIC_API_URL}/customer-auth/refresh`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/customer-auth/refresh`,
         {},
         { withCredentials: true },
       )

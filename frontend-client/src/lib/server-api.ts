@@ -8,7 +8,7 @@ export async function serverFetch<T>(
   revalidateSeconds = 60,
 ): Promise<T | null> {
   try {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}/api/v1${path}`, {
       next: { revalidate: revalidateSeconds },
     });
     if (!res.ok) return null;

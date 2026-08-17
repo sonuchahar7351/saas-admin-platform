@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/auth-store";
 import { silentRefresh } from "./auth-refresh";
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/v1`,
   withCredentials: true, // sends the httpOnly refresh cookie automatically
 });
 

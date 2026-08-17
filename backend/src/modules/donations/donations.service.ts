@@ -6,11 +6,11 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { QueryDonationsDto } from './dto/query-donations.dto';
 import { CreateDonationDto } from './dto/create-donation-order.dto';
 import * as bcrypt from 'bcrypt';
-import { ReceiptsService } from '../receipts/receipts.service';
 import { VerifyDonationDto } from './dto/verify-donation.dto';
 import { ExportDonationsDto } from './dto/export-donations.dto';
 import { buildDonationsWorkbook } from './excel-export.util';
 import { ReceiptsQueueService } from '../../queues/receipts/receipts-queue.service';
+import { BusinessRuleViolationException } from '../../common/exceptions/app-exceptions';
 
 @Injectable()
 export class DonationsService {
@@ -35,7 +35,8 @@ export class DonationsService {
     const hasProducts = dto.donationType === 'PRODUCT';
 
     if (hasAmount && (!dto.amount || dto.amount < 1)) {
-      throw new BadRequestException(
+      throw new BusinessRuleViolationException(
+        'DONATION_AMOUNT_REQUIRED',
         'A donation amount is required for an AMOUNT donation.',
       );
     }
