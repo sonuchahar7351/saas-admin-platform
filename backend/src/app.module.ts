@@ -33,6 +33,7 @@ import { ReceiptsQueueModule } from './queues/receipts/receipts-queue.module';
 import { EmailModule } from './modules/email/email.module';
 import { RedisModule } from './modules/radis/radic.module';
 import { PermissionsCacheModule } from './common/permissions-cache/permissions-cache.module';
+import { CacheModule } from './common/cache/cashe.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { PermissionsCacheModule } from './common/permissions-cache/permissions-c
     EmailQueueModule,
     ReceiptsQueueModule,
     EmailModule,
+    CacheModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -52,12 +52,6 @@ export class AnalyticsController {
   @Public()
   @Get('public/stats')
   async getPublicStats() {
-    const summary = await this.service.getSummaryCards();
-    return {
-      totalRaised: summary.totalDonations,
-      totalCampaigns: summary.totalCampaigns,
-      completedCampaigns: summary.completedCampaigns,
-      totalDonors: summary.totalCustomers,
-    };
+    return await this.service.getPublicStats();
   }
 }

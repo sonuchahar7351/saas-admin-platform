@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsRepository } from './analytics.repository';
+import { CacheService } from '../../common/cache/cache.service';
 
 // BigInt from Postgres COUNT/SUM doesn't serialize to JSON directly — convert at the boundary
 function serializeBigInts(rows: any[]) {
@@ -14,7 +15,10 @@ function serializeBigInts(rows: any[]) {
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private repo: AnalyticsRepository) {}
+  constructor(
+    private repo: AnalyticsRepository,
+    private cache: CacheService,
+  ) {}
 
   getSummaryCards() {
     return this.repo.getSummaryCards();
@@ -51,5 +55,17 @@ export class AnalyticsService {
 
   getLatestTransactions(limit?: number) {
     return this.repo.getLatestTransactions(limit);
+  }
+
+  async getPublicStats() {
+    return this.cache.getOrSet('cache:analytics:public-stats', 30, async () => {
+      const summary = await this.getSummaryCards();
+      return {
+        totalRaised: summary.totalDonations,
+        totalCampaigns: summary.totalCampaigns,
+        completedCampaigns: summary.completedCampaigns,
+        totalDonors: summary.totalCustomers,
+      };
+    });
   }
 }

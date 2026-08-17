@@ -10,6 +10,7 @@ import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { MediaRepository } from '../media/media.repository';
 import { FeatureCampaignDto } from './dto/feature-campaign.dto';
 import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
+import { CacheService } from '../../common/cache/cache.service';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -24,6 +25,7 @@ export class CampaignsService {
   constructor(
     private repo: CampaignsRepository,
     private mediaRepo: MediaRepository,
+    private cache: CacheService,
   ) {}
 
   async setFeatured(id: string, dto: FeatureCampaignDto) {
@@ -33,20 +35,24 @@ export class CampaignsService {
         'A desktop feature image is required to feature a campaign.',
       );
     }
-    return this.repo.update(id, {
+    const updated = await this.repo.update(id, {
       isFeatured: dto.isFeatured,
       featuredOrder: dto.isFeatured ? (dto.featuredOrder ?? 0) : null,
       featureImageDesktopId: dto.isFeatured ? dto.featureImageDesktopId : null,
       featureImageMobileId: dto.isFeatured ? dto.featureImageMobileId : null,
     });
+    await this.invalidateCampaignCaches(campaign.slug);
+    return updated;
   }
 
   async findFeatured() {
-    const campaigns = await this.repo.findAll({ status: 'ACTIVE' });
-    const featured = campaigns
-      .filter((c) => c.isFeatured)
-      .sort((a, b) => (a.featuredOrder ?? 0) - (b.featuredOrder ?? 0));
-    return this.attachImageUrls(featured);
+    return this.cache.getOrSet('cache:campaigns:featured', 60, async () => {
+      const campaigns = await this.repo.findAll({ status: 'ACTIVE' });
+      const featured = campaigns
+        .filter((c) => c.isFeatured)
+        .sort((a, b) => (a.featuredOrder ?? 0) - (b.featuredOrder ?? 0));
+      return this.attachImageUrls(featured);
+    });
   }
 
   private async attachImageUrls(campaigns: any[]) {
@@ -97,15 +103,17 @@ export class CampaignsService {
   }
 
   async findPublicBySlug(slug: string) {
-    const campaign = await this.repo.findBySlug(slug);
-    if (
-      !campaign ||
-      (campaign.status !== 'ACTIVE' && campaign.status !== 'COMPLETED')
-    ) {
-      return null;
-    }
-    const [withImages] = await this.attachImageUrls([campaign]);
-    return withImages;
+    const key = `cache:campaign:slug:${slug}`;
+    return this.cache.getOrSet(key, 60, async () => {
+      const campaign = await this.repo.findBySlug(slug);
+      if (
+        !campaign ||
+        (campaign.status !== 'ACTIVE' && campaign.status !== 'COMPLETED')
+      )
+        return null;
+      const [withImage] = await this.attachImageUrls([campaign]);
+      return withImage;
+    });
   }
 
   async findAll(filters: { status?: string; categoryId?: string }) {
@@ -193,7 +201,7 @@ export class CampaignsService {
     this.validatePresets(dto.donationPresets, dto.tipPresets);
     const slug = await this.generateUniqueSlug(dto.title, dto.slug);
 
-    return this.repo.create({
+    const campaign = await this.repo.create({
       title: dto.title,
       slug,
       ngoId: dto.ngoId,
@@ -209,6 +217,9 @@ export class CampaignsService {
       createdById,
       isAddress: dto.isAddress,
     });
+
+    await this.invalidateCampaignCaches(campaign.slug);
+    return campaign;
   }
 
   async update(id: string, dto: UpdateCampaignDto) {
@@ -225,7 +236,9 @@ export class CampaignsService {
     if (dto.goalAmount) data.goalAmount = Math.round(dto.goalAmount * 100);
     if (dto.expiryDate) data.expiryDate = new Date(dto.expiryDate);
 
-    return this.repo.update(id, data);
+    const updated = await this.repo.update(id, data);
+    await this.invalidateCampaignCaches(existing.slug);
+    return updated;
   }
 
   async changeStatus(id: string, newStatus: string) {
@@ -237,7 +250,9 @@ export class CampaignsService {
         `Cannot change status from ${campaign.status} to ${newStatus}. Allowed: ${allowed.join(', ') || 'none (terminal state)'}`,
       );
     }
-    return this.repo.updateStatus(id, newStatus);
+    const updated = await this.repo.updateStatus(id, newStatus);
+    await this.invalidateCampaignCaches(campaign.slug);
+    return updated;
   }
 
   async duplicate(id: string, createdById: string) {
@@ -245,7 +260,7 @@ export class CampaignsService {
     const newTitle = `${original.title} (Copy)`;
     const slug = await this.generateUniqueSlug(newTitle);
 
-    return this.repo.create({
+    const created = await this.repo.create({
       title: newTitle,
       slug,
       ngoId: original.ngoId,
@@ -260,21 +275,36 @@ export class CampaignsService {
       status: 'CREATED',
       createdById,
     });
+
+    await this.invalidateCampaignCaches(created.slug);
+    return created;
   }
 
-  delete(id: string) {
-    return this.repo.softDelete(id); // status -> DELETED, matches your spec's status list (not a hard delete)
+  async delete(id: string) {
+    const campaign = await this.findById(id);
+    const result = await this.repo.softDelete(id);
+    await this.invalidateCampaignCaches(campaign.slug);
+    return result;
   }
 
   async findPublicPaginated(query: QueryPublicCampaignsDto) {
-    const [data, total] = await this.repo.findPublicPaginated(query);
-    const withImages = await this.attachImageUrls(data);
-    return {
-      data: withImages,
-      total,
-      page: query.page,
-      limit: query.limit,
-      totalPages: Math.ceil(total / query.limit),
-    };
+    const key = `cache:campaigns:public:${JSON.stringify(query)}`;
+    return this.cache.getOrSet(key, 60, async () => {
+      const [data, total] = await this.repo.findPublicPaginated(query);
+      const withImages = await this.attachImageUrls(data);
+      return {
+        data: withImages,
+        total,
+        page: query.page,
+        limit: query.limit,
+        totalPages: Math.ceil(total / query.limit),
+      };
+    });
+  }
+
+  private async invalidateCampaignCaches(slug?: string) {
+    await this.cache.delByPrefix('cache:campaigns:public:');
+    await this.cache.del('cache:campaigns:featured');
+    if (slug) await this.cache.del(`cache:campaign:slug:${slug}`);
   }
 }
