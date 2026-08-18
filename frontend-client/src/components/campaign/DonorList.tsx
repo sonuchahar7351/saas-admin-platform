@@ -34,7 +34,7 @@ export function DonorList({ campaignId }: { campaignId: string }) {
         )}
       </div>
 
-      <div className="scrollbar-thin max-h-64 space-y-3 overflow-y-auto pr-1">
+      <div className="scrollbar-thin max-h-65 space-y-3 overflow-y-auto pr-1">
         {donors.map((d, i) => (
           <div key={i} className="flex items-center justify-between text-sm">
             <div className="min-w-0 flex-1 pr-2">

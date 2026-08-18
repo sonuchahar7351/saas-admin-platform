@@ -20,7 +20,7 @@ export function CampaignTestimonials({ campaignId }: { campaignId: string }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="block">
+    <div className="max-w-170">
       <h2 className="mb-4 font-heading text-xl font-semibold">
         What people are saying
       </h2>
@@ -36,7 +36,7 @@ export function CampaignTestimonials({ campaignId }: { campaignId: string }) {
           1024: { slidesPerView: 2, spaceBetween: 20 },
         }}
         loop={items.length > 3}
-        wrapperClassName="w-full sm:max-w-[570px] max-w-[380px]"
+        wrapperClassName="w-full"
         carouselContainerClassName="relative w-full pb-8"
         paginationColor="#706c64"
         activePaginationColor="#10b981"

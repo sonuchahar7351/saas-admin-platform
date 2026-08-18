@@ -104,6 +104,16 @@ export class DonationsController {
     return this.service.verifyPayment(dto);
   }
 
+  // donations.controller.ts — add
+  @Public()
+  @Get('public/leaderboard')
+  getLeaderboard(
+    @Query('campaignId') campaignId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.getLeaderboard(campaignId, limit ? Number(limit) : 5);
+  }
+
   @RequirePermission('donations', 'read')
   @Get()
   findAllAdmin(@Query() query: QueryDonationsDto) {

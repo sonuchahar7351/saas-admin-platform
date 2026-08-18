@@ -15,8 +15,8 @@ export function JourneyTimeline({ campaignId }: { campaignId: string }) {
   if (steps.length === 0) return null;
 
   return (
-    <div>
-      <h2 className="mb-4 font-heading text-xl font-semibold">
+    <div className="">
+      <h2 className="mb-4 font-heading text-xl font-semibold text-left">
         Campaign journey
       </h2>
       <div className="space-y-6 border-l-2 border-dashed border-border pl-5">

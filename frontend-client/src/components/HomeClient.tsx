@@ -12,6 +12,7 @@ import {
   FeaturedCampaign,
   PublicCampaign,
 } from "@/lib/campaigs-api";
+import { LeaderboardWidget } from "./LeaderboardWidget";
 
 export function HomeClient({
   initialFeatured,
@@ -70,6 +71,7 @@ export function HomeClient({
 
       <WhyChooseUsSection />
       <StatsSection initialStats={initialStats} />
+      <LeaderboardWidget title="Platform's top supporters" />
 
       <TestimonialsSection />
       <FaqSection />

@@ -13,6 +13,7 @@ import { ReceiptsQueueService } from '../../queues/receipts/receipts-queue.servi
 import { BusinessRuleViolationException } from '../../common/exceptions/app-exceptions';
 import { FraudDetectionService } from './fraud.service';
 import { AiService } from '../ai/ai.service';
+import { CacheService } from '../../common/cache/cache.service';
 
 @Injectable()
 export class DonationsService {
@@ -23,6 +24,7 @@ export class DonationsService {
     private receiptsQueue: ReceiptsQueueService,
     private fraudDetection: FraudDetectionService,
     private aiService: AiService,
+    private cache: CacheService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -470,5 +472,26 @@ export class DonationsService {
       amount: flag.donation.amount,
     });
     return { explanation };
+  }
+
+  async getLeaderboard(campaignId?: string, limit = 10) {
+    const key = `cache:leaderboard:${campaignId || 'platform'}`;
+    return this.cache.getOrSet(key, 300, async () => {
+      // 5 min TTL — a leaderboard doesn't need to-the-second freshness
+      const grouped = await this.repo.getLeaderboard(campaignId, limit);
+      if (grouped.length === 0) return [];
+
+      const billings = await this.repo.getBillingDetails(
+        grouped.map((g) => g.billingId),
+      );
+      const nameById = new Map(billings.map((b) => [b.id, b.donorName]));
+
+      return grouped.map((g, i) => ({
+        rank: i + 1,
+        donorName: nameById.get(g.billingId) || 'Donor',
+        totalAmount: g._sum.amount || 0,
+        donationCount: g._count.id,
+      }));
+    });
   }
 }

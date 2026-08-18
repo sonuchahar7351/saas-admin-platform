@@ -349,4 +349,26 @@ export class DonationsRepository {
   }) {
     return this.prisma.fraudFlag.create({ data: data as any });
   }
+
+  getLeaderboard(campaignId?: string, limit = 10) {
+    return this.prisma.donation.groupBy({
+      by: ['billingId'],
+      where: {
+        status: 'PAID',
+        isAnonymous: false,
+        ...(campaignId && { campaignId }),
+      },
+      _sum: { amount: true },
+      _count: { id: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: limit,
+    });
+  }
+
+  getBillingDetails(billingIds: string[]) {
+    return this.prisma.billing.findMany({
+      where: { id: { in: billingIds } },
+      select: { id: true, donorName: true },
+    });
+  }
 }

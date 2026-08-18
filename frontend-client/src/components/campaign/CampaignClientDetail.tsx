@@ -10,6 +10,8 @@ import { CampaignTestimonials } from "./CampaignTestimonials";
 import { UpdatesTimeline } from "./UpdatesTimeline";
 import { JourneyTimeline } from "./JourneyTimeline";
 import { useCartStore } from "../../store/cart-store";
+import { LeaderboardWidget } from "../LeaderboardWidget";
+import { ShareButtons } from "../ShareButtons";
 
 export function CampaignDetailClient({ campaign }: { campaign: any }) {
   const initCampaign = useCartStore((s) => s.initCampaign);
@@ -34,10 +36,10 @@ export function CampaignDetailClient({ campaign }: { campaign: any }) {
   ].filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="mx-auto max-w-6xl px-6 py-10">
       <CampaignGallery images={galleryImages} />
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
+      <div className="mt-8 grid grid-cols-1 sm:gap-10 gap-0 lg:grid-cols-[1fr_380px]">
         <div className="space-y-10">
           <div>
             <span className="font-mono text-xs uppercase tracking-wide text-accent">
@@ -49,6 +51,12 @@ export function CampaignDetailClient({ campaign }: { campaign: any }) {
             <p className="mt-1 text-sm text-text-muted">
               by {campaign.ngo.name}
             </p>
+            <div className="mt-3">
+              <ShareButtons
+                url={`${process.env.NEXT_PUBLIC_SITE_URL}/campaigns/${campaign.slug}`}
+                title={campaign.title}
+              />
+            </div>
           </div>
 
           <div className="block sm:hidden space-y-4">
@@ -72,15 +80,22 @@ export function CampaignDetailClient({ campaign }: { campaign: any }) {
             <DonationSelector campaign={campaign} />
           </div>
 
+          <div className="relative flex">
+            <ProductsSection campaignId={campaign.id} />
+          </div>
+
           {campaign.story && <StoryRenderer content={campaign.story} />}
 
-          <ProductsSection campaignId={campaign.id} />
           <JourneyTimeline campaignId={campaign.id} />
           <UpdatesTimeline campaignId={campaign.id} />
           <CampaignTestimonials campaignId={campaign.id} />
+          <div className="sm:hidden block space-y-10">
+            <LeaderboardWidget campaignId={campaign.id} />
+            <DonorList campaignId={campaign.id} />
+          </div>
         </div>
 
-        <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+        <div className="space-y-4 hidden sm:block lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-2xl border border-border bg-surface p-5">
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EDEBE4]">
               <div
@@ -97,9 +112,10 @@ export function CampaignDetailClient({ campaign }: { campaign: any }) {
               </span>
             </div>
           </div>
-          <div className="hidden sm:block">
+          <div>
             <DonationSelector campaign={campaign} />
           </div>
+          <LeaderboardWidget campaignId={campaign.id} />
           <DonorList campaignId={campaign.id} />
         </div>
       </div>
