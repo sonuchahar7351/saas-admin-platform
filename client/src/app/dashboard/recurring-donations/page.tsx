@@ -244,6 +244,21 @@ function RecurringDonationsContent() {
           <span className="font-mono text-xs">{info.getValue()}</span>
         ),
       }),
+      columnHelper.accessor("nextChargeDate", {
+        header: "Next Payment",
+        cell: (info) => {
+          const value = info.getValue();
+          return value ? (
+            new Date(value).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+          ) : (
+            <span className="text-text-secondary">—</span>
+          );
+        },
+      }),
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => <RecurringStatusBadge status={info.getValue()} />,
@@ -329,24 +344,12 @@ function RecurringDonationsContent() {
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">
-            Recurring Donations
+            Customers
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
             {data?.total ?? 0} total
           </p>
         </div>
-        <ExportPanel
-          filters={{
-            status: status || undefined,
-            frequency: frequency || undefined,
-            search: search || undefined,
-          }}
-          selectedIds={
-            Object.keys(rowSelection)
-              .map((idx) => data?.data[Number(idx)]?.id)
-              .filter(Boolean) as string[]
-          }
-        />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -391,6 +394,18 @@ function RecurringDonationsContent() {
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
         </select>
+        <ExportPanel
+          filters={{
+            status: status || undefined,
+            frequency: frequency || undefined,
+            search: search || undefined,
+          }}
+          selectedIds={
+            Object.keys(rowSelection)
+              .map((idx) => data?.data[Number(idx)]?.id)
+              .filter(Boolean) as string[]
+          }
+        />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">

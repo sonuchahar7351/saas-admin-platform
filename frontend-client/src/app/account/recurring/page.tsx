@@ -116,6 +116,17 @@ export default function RecurringDonationsPage() {
                     </span>
                   </div>
 
+                  {r.nextChargeDate && r.status === "ACTIVE" && (
+                    <p className="mt-1.5 text-xs text-text-muted">
+                      Next payment on{" "}
+                      {new Date(r.nextChargeDate).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
+
                   {r.status === "HALTED" && (
                     <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
                       Your bank declined the last charge. Please cancel and set

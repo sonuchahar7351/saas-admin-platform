@@ -233,6 +233,16 @@ export function DonationsTable({ campaignId }: { campaignId?: string }) {
 
   return (
     <div>
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">
+            Transactions
+          </h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            {data?.total ?? 0} total
+          </p>
+        </div>
+      </div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <form
           onSubmit={runSearch}

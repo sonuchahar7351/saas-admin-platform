@@ -123,6 +123,9 @@ export class RecurringDonationsService {
       status: 'CREATED',
       razorpayPlanId: planId,
       razorpaySubscriptionId: subscription.id,
+      nextChargeDate: (subscription as any).current_end
+        ? new Date((subscription as any).current_end * 1000)
+        : null,
     });
 
     // frontend opens Razorpay Checkout with subscription_id (not order_id) —
@@ -232,10 +235,15 @@ export class RecurringDonationsService {
       );
       return;
     }
+    const nextChargeDate = subscriptionEntity.current_end
+      ? new Date(subscriptionEntity.current_end * 1000)
+      : undefined;
 
     switch (eventType) {
       case 'subscription.activated':
-        await this.repo.updateStatus(record.id, 'ACTIVE');
+        await this.repo.updateStatus(record.id, 'ACTIVE', {
+          ...(nextChargeDate && { nextChargeDate }),
+        });
         break;
 
       case 'subscription.charged': {
@@ -271,7 +279,9 @@ export class RecurringDonationsService {
         );
 
         if (record.status !== 'ACTIVE')
-          await this.repo.updateStatus(record.id, 'ACTIVE'); // first charge = activation confirmation too
+          await this.repo.updateStatus(record.id, 'ACTIVE', {
+            ...(nextChargeDate && { nextChargeDate }),
+          });
         break;
       }
 
@@ -280,7 +290,10 @@ export class RecurringDonationsService {
         break;
 
       case 'subscription.halted':
-        await this.repo.updateStatus(record.id, 'HALTED');
+        await this.repo.updateStatus(record.id, 'HALTED', {
+          nextChargeDate: null,
+        }); // no future charge is actually scheduled once halted
+
         this.logger.warn(
           `Subscription ${record.id} halted — repeated charge failures. Customer's bank likely declined the mandate.`,
         );
@@ -293,7 +306,9 @@ export class RecurringDonationsService {
         break;
 
       case 'subscription.completed':
-        await this.repo.updateStatus(record.id, 'COMPLETED');
+        await this.repo.updateStatus(record.id, 'COMPLETED', {
+          nextChargeDate: null,
+        });
         break;
     }
   }

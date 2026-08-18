@@ -9,6 +9,7 @@ export interface RecurringRecord {
   createdAt: string;
   campaign: { title: string; slug: string };
   billing: { donorName: string; donorEmail: string };
+  nextChargeDate: string | null;
 }
 export interface RecurringQuery {
   page: number;
