@@ -11,6 +11,7 @@ import {
   Query,
   Param,
   Res,
+  Patch,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { DonationsService } from './donations.service';
@@ -24,6 +25,7 @@ import { CreateDonationDto } from './dto/create-donation-order.dto';
 import { VerifyDonationDto } from './dto/verify-donation.dto';
 import { ExportDonationsDto } from './dto/export-donations.dto';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('donations')
 export class DonationsController {
@@ -50,7 +52,9 @@ export class DonationsController {
   @Post('create-order')
   createOrder(@Body() dto: CreateDonationDto, @Req() req: any) {
     const authenticatedCustomerId = req.user?.customerId || null;
-    return this.service.createOrder(dto, authenticatedCustomerId);
+    const ipAddress =
+      req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim();
+    return this.service.createOrder(dto, authenticatedCustomerId, ipAddress);
   }
 
   @Public()
@@ -126,6 +130,34 @@ export class DonationsController {
       limit ? Number(limit) : 10,
       search,
     );
+  }
+
+  @RequirePermission('fraud', 'read')
+  @Get('fraud-flags')
+  findFraudFlags(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('severity') severity?: string,
+    @Query('reviewed') reviewed?: string,
+  ) {
+    return this.service.findFraudFlags({
+      page: page ? Number(page) : 1,
+      limit: limit ? Number(limit) : 20,
+      severity,
+      reviewed: reviewed !== undefined ? reviewed === 'true' : undefined,
+    });
+  }
+
+  @RequirePermission('fraud', 'write')
+  @Patch('fraud-flags/:id/review')
+  markReviewed(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.service.markFraudFlagReviewed(id, user.userId);
+  }
+
+  @RequirePermission('fraud', 'read')
+  @Get('fraud-flags/:id/explain')
+  explainFlag(@Param('id') id: string) {
+    return this.service.explainFlag(id);
   }
 
   @RequirePermission('donations', 'read')

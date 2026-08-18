@@ -3,6 +3,7 @@ import { CustomerAuthProvider } from "../components/CustomerAuthProvider";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SupportChatWidget } from "@/components/SupportChatWidget";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -22,6 +23,7 @@ export default function RootLayout({
           <ThemeProvider>
             <SiteHeader />
             {children}
+            <SupportChatWidget />
           </ThemeProvider>
         </CustomerAuthProvider>
       </body>

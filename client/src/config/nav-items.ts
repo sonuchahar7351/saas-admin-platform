@@ -56,6 +56,11 @@ export const navItems: NavItem[] = [
     roles: ["SUPER_ADMIN"],
   },
   {
+    label: "Fraud Flags",
+    href: "/dashboard/fraud",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
+  },
+  {
     label: "Audit Logs",
     href: "/dashboard/audit-logs",
     roles: ["SUPER_ADMIN"],

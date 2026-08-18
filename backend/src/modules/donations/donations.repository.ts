@@ -135,6 +135,7 @@ export class DonationsRepository {
     isAnonymous: boolean;
     razorpayOrderId: string;
     productItems?: { productId: string; quantity: number; amount: number }[];
+    ipAddress?: string;
   }) {
     const { productItems, ...donationData } = data;
     return this.prisma.donation.create({
@@ -293,5 +294,59 @@ export class DonationsRepository {
         billing: true,
       },
     });
+  }
+
+  countRecentByEmail(email: string, sinceMinutes: number) {
+    return this.prisma.donation.count({
+      where: {
+        billing: { donorEmail: email },
+        createdAt: { gte: new Date(Date.now() - sinceMinutes * 60000) },
+      },
+    });
+  }
+
+  countRecentFailedByEmailOrIp(
+    email: string,
+    ipAddress: string | undefined,
+    sinceMinutes: number,
+  ) {
+    return this.prisma.donation.count({
+      where: {
+        status: 'FAILED',
+        createdAt: { gte: new Date(Date.now() - sinceMinutes * 60000) },
+        OR: [
+          { billing: { donorEmail: email } },
+          ...(ipAddress ? [{ ipAddress }] : []),
+        ],
+      },
+    });
+  }
+
+  countDistinctDonorsFromIp(ipAddress: string, sinceMinutes: number) {
+    return this.prisma.donation.findMany({
+      where: {
+        ipAddress,
+        createdAt: { gte: new Date(Date.now() - sinceMinutes * 60000) },
+      },
+      select: { billing: { select: { donorEmail: true } } },
+      distinct: ['billingId'],
+    });
+  }
+
+  getCampaignAverageDonation(campaignId: string) {
+    return this.prisma.donation.aggregate({
+      where: { campaignId, status: 'PAID' },
+      _avg: { amount: true },
+      _count: true,
+    });
+  }
+
+  createFraudFlag(data: {
+    donationId: string;
+    ruleCode: string;
+    severity: string;
+    details: any;
+  }) {
+    return this.prisma.fraudFlag.create({ data: data as any });
   }
 }

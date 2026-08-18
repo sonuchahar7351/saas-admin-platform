@@ -18,6 +18,8 @@ async function bootstrap() {
 
   expressApp.set('query parser', 'extended');
 
+  expressApp.set('trust proxy', 1);
+
   app.use(
     helmet({
       // Razorpay's checkout script + your own frontend origins need to load — default CSP would block them

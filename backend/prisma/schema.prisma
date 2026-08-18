@@ -28,6 +28,7 @@ model User {
   createdCampaigns Campaign[]
   uploadedMedia    Media[]
   eightyGReviews EightyGApplication[]
+  fraudReviews FraudFlag[]
  
 
   createdAt     DateTime  @default(now())
@@ -405,8 +406,10 @@ model Donation {
   products     DonationProduct[]
   receipt      Receipt?
   eightyGApplication EightyGApplication?
-   recurringDonationId String?
+  recurringDonationId String?
   recurringDonation    RecurringDonation? @relation(fields: [recurringDonationId], references: [id])
+  ipAddress String?
+  fraudFlags FraudFlag[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -558,4 +561,28 @@ model RecurringDonation {
   donations   Donation[] // each cycle's actual charge, once it's captured
 
   @@map("recurring_donations")
+}
+
+enum FraudSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model FraudFlag {
+  id         String        @id @default(uuid())
+  donationId String
+  donation   Donation      @relation(fields: [donationId], references: [id])
+  ruleCode   String        // e.g. "VELOCITY", "CARD_TESTING", "AMOUNT_ANOMALY", "IP_FANOUT"
+  severity   FraudSeverity
+  details    Json          // rule-specific context: counts, window, comparison values — enough for an admin to understand why
+  reviewed   Boolean       @default(false)
+  reviewedById String?
+  reviewedBy   User?       @relation(fields: [reviewedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([donationId])
+  @@index([severity, reviewed])
+  @@map("fraud_flags")
 }

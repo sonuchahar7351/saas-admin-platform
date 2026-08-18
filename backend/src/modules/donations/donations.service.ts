@@ -11,6 +11,8 @@ import { ExportDonationsDto } from './dto/export-donations.dto';
 import { buildDonationsWorkbook } from './excel-export.util';
 import { ReceiptsQueueService } from '../../queues/receipts/receipts-queue.service';
 import { BusinessRuleViolationException } from '../../common/exceptions/app-exceptions';
+import { FraudDetectionService } from './fraud.service';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class DonationsService {
@@ -19,6 +21,8 @@ export class DonationsService {
   constructor(
     private repo: DonationsRepository,
     private receiptsQueue: ReceiptsQueueService,
+    private fraudDetection: FraudDetectionService,
+    private aiService: AiService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -29,6 +33,7 @@ export class DonationsService {
   async createOrder(
     dto: CreateDonationDto,
     authenticatedCustomerId: string | null,
+    ipAddress?: string,
   ) {
     // --- 1. Enforce mutual exclusivity: exactly one of amount or products, never both, never neither ---
     const hasAmount = dto.donationType === 'AMOUNT';
@@ -105,6 +110,7 @@ export class DonationsService {
           amount: product.amount * item.quantity,
         };
       });
+
       donationAmountPaise = productItems.reduce((sum, p) => sum + p.amount, 0);
     }
 
@@ -118,6 +124,8 @@ export class DonationsService {
       receipt: `donation_${Date.now()}`,
     });
 
+    console.log(order);
+
     const donation = await this.repo.createDonationWithProducts({
       campaignId: dto.campaignId,
       customerId,
@@ -129,7 +137,18 @@ export class DonationsService {
       isAnonymous: dto.isAnonymous || false,
       razorpayOrderId: order.id,
       productItems,
+      ipAddress,
     });
+
+    this.fraudDetection
+      .evaluate(
+        donation.id,
+        dto.campaignId,
+        dto.donor.email,
+        donationAmountPaise,
+        ipAddress,
+      )
+      .catch(() => {});
 
     return {
       orderId: order.id,
@@ -396,5 +415,60 @@ export class DonationsService {
     }
 
     return buildDonationsWorkbook(donations);
+  }
+
+  async findFraudFlags(query: {
+    page: number;
+    limit: number;
+    severity?: string;
+    reviewed?: boolean;
+  }) {
+    const where: any = {
+      ...(query.severity && { severity: query.severity }),
+      ...(query.reviewed !== undefined && { reviewed: query.reviewed }),
+    };
+    const [data, total] = await Promise.all([
+      this.repo['prisma'].fraudFlag.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (query.page - 1) * query.limit,
+        take: query.limit,
+        include: {
+          donation: {
+            include: { billing: true, campaign: { select: { title: true } } },
+          },
+        },
+      }),
+      this.repo['prisma'].fraudFlag.count({ where }),
+    ]);
+    return {
+      data,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
+  }
+
+  async markFraudFlagReviewed(id: string, reviewedById: string) {
+    return this.repo['prisma'].fraudFlag.update({
+      where: { id },
+      data: { reviewed: true, reviewedById },
+    });
+  }
+
+  async explainFlag(id: string) {
+    const flag = await this.repo['prisma'].fraudFlag.findUniqueOrThrow({
+      where: { id },
+      include: { donation: { include: { billing: true } } },
+    });
+
+    const explanation = await this.aiService.explainFraudFlag({
+      ruleCode: flag.ruleCode,
+      details: flag.details,
+      donorEmail: flag.donation.billing.donorEmail,
+      amount: flag.donation.amount,
+    });
+    return { explanation };
   }
 }
