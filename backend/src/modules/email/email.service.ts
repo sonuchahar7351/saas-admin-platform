@@ -68,4 +68,44 @@ export class EmailService {
       html: `<p>Dear ${donorName},</p><p>We were unable to approve your 80G certificate application for the following reason:</p><p>${reason}</p><p>Please contact support if you believe this is an error.</p>`,
     });
   }
+
+  async sendWeeklyReport(
+    to: string,
+    adminName: string,
+    summary: any,
+    topCampaigns: any[],
+  ) {
+    const topCampaignsHtml = topCampaigns
+      .map(
+        (c, i) =>
+          `<li>${i + 1}. ${c.title} — ₹${(c.raisedAmount / 100).toLocaleString('en-IN')} raised</li>`,
+      )
+      .join('');
+
+    const html = `
+    <p>Hi ${adminName},</p>
+    <p>Here's your weekly summary:</p>
+    <ul>
+      <li>Total donations: ₹${(summary.totalDonations / 100).toLocaleString('en-IN')}</li>
+      <li>This month: ₹${(summary.monthlyDonations / 100).toLocaleString('en-IN')}</li>
+      <li>Running campaigns: ${summary.runningCampaigns}</li>
+      <li>New/total donors: ${summary.totalCustomers}</li>
+    </ul>
+    <p>Top campaigns this week:</p>
+    <ol>${topCampaignsHtml}</ol>
+  `;
+
+    if (!this.transporter) {
+      this.logger.warn(
+        `SMTP not configured — weekly report for ${to} not sent`,
+      );
+      return;
+    }
+    await this.transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to,
+      subject: 'Your weekly GiveForward summary',
+      html,
+    });
+  }
 }

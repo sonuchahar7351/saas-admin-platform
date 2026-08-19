@@ -41,4 +41,17 @@ export class EmailQueueService {
       this.defaultJobOptions,
     );
   }
+
+  queueWeeklyReport(
+    email: string,
+    adminName: string,
+    summary: any,
+    topCampaigns: any[],
+  ) {
+    return this.emailQueue.add(
+      'weekly-report',
+      { email, adminName, summary, topCampaigns },
+      this.defaultJobOptions,
+    );
+  }
 }

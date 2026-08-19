@@ -33,6 +33,14 @@ export class EmailProcessor extends WorkerHost {
           job.data.reason,
         );
         break;
+      case 'weekly-report':
+        await this.emailService.sendWeeklyReport(
+          job.data.email,
+          job.data.adminName,
+          job.data.summary,
+          job.data.topCampaigns,
+        );
+        break;
       default:
         this.logger.warn(`Unknown email job type: ${job.name}`);
     }
