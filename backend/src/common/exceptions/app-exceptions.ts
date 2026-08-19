@@ -27,3 +27,43 @@ export class DuplicateResourceException extends AppException {
     super('DUPLICATE_RESOURCE', message, HttpStatus.CONFLICT);
   }
 }
+
+export class CampaignGoalReachedException extends AppException {
+  constructor() {
+    super(
+      'CAMPAIGN_GOAL_REACHED',
+      'This campaign has already reached its goal. Please increase the goal amount before activating the campaign again.',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class CampaignExpiredException extends AppException {
+  constructor() {
+    super(
+      'CAMPAIGN_EXPIRED',
+      'This campaign has expired. Please update the expiry date before activating the campaign again.',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class CampaignGoalAndExpiryException extends AppException {
+  constructor() {
+    super(
+      'CAMPAIGN_GOAL_AND_EXPIRY_REACHED',
+      'This campaign has reached its goal and expired. Please increase the goal amount and update the expiry date before activating it again.',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+export class CampaignNotAcceptingDonationsException extends AppException {
+  constructor() {
+    super(
+      'CAMPAIGN_NOT_ACCEPTING_DONATIONS',
+      'This campaign is no longer accepting donations.',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+}

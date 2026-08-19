@@ -21,7 +21,7 @@ function daysRemaining(expiryDate: string): number {
 const NEXT_STATUS: Record<string, string[]> = {
   CREATED: ["ACTIVE", "DELETED"],
   ACTIVE: ["COMPLETED", "DELETED"],
-  COMPLETED: ["DELETED"],
+  COMPLETED: ["DELETED", "ACTIVE"],
   DELETED: ["ACTIVE"],
 };
 
@@ -81,7 +81,7 @@ export function CampaignCard({
           /{campaign.slug}
         </p>
 
-        <div className="mt-3 grid grid-cols-2 gap-y-1.5 text-xs">
+        <div className="mt-3 grid grid-cols-2 gap-y-1.5 text-xs text-left">
           <span className="text-text-secondary">Goal</span>
           <span className="text-right font-medium">
             ₹{(campaign.goalAmount / 100).toLocaleString("en-IN")}

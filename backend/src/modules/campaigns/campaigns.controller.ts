@@ -18,10 +18,15 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FeatureCampaignDto } from './dto/feature-campaign.dto';
 import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
 import { QueryAdminCampaignsDto } from './dto/query-admin-campaigns.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Controller('campaigns')
 export class CampaignsController {
-  constructor(private service: CampaignsService) {}
+  constructor(
+    private service: CampaignsService,
+    @InjectQueue('campaign-status') private campaignStatusQueue: Queue,
+  ) {}
 
   // public storefront browsing — active/completed only, no auth
   @Public()
@@ -34,6 +39,13 @@ export class CampaignsController {
   @Get('public/featured')
   findFeatured() {
     return this.service.findFeatured();
+  }
+
+  @RequirePermission('campaigns', 'write')
+  @Post('sweep-status-now')
+  async sweepNow() {
+    await this.campaignStatusQueue.add('sweep-campaigns', {});
+    return { message: 'Sweep queued' };
   }
 
   @Public()

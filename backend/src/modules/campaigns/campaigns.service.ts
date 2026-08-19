@@ -11,13 +11,14 @@ import { MediaRepository } from '../media/media.repository';
 import { FeatureCampaignDto } from './dto/feature-campaign.dto';
 import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
 import { CacheService } from '../../common/cache/cache.service';
+import { CampaignStatusService } from './campaign-status.service';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   CREATED: ['ACTIVE', 'DELETED'],
   ACTIVE: ['COMPLETED', 'DELETED'],
-  COMPLETED: ['DELETED'],
-  DELETED: ['ACTIVE'], // terminal state
+  COMPLETED: ['DELETED', 'ACTIVE'],
+  DELETED: ['ACTIVE'],
 };
 
 @Injectable()
@@ -26,6 +27,7 @@ export class CampaignsService {
     private repo: CampaignsRepository,
     private mediaRepo: MediaRepository,
     private cache: CacheService,
+    private statusService: CampaignStatusService,
   ) {}
 
   async setFeatured(id: string, dto: FeatureCampaignDto) {
@@ -112,7 +114,7 @@ export class CampaignsService {
       )
         return null;
       const [withImage] = await this.attachImageUrls([campaign]);
-      return withImage;
+      return this.withStatusEvaluation(withImage);
     });
   }
 
@@ -130,8 +132,13 @@ export class CampaignsService {
   }) {
     const [data, total] = await this.repo.findAllPaginated(query);
     const withImages = await this.attachImageUrls(data);
+
+    const withStatus = withImages.map((campaign) =>
+      this.withStatusEvaluation(campaign),
+    );
+
     return {
-      data: withImages,
+      data: withStatus,
       total,
       page: query.page,
       limit: query.limit,
@@ -143,7 +150,7 @@ export class CampaignsService {
     const campaign = await this.repo.findById(id);
     if (!campaign) throw new NotFoundException('Campaign not found');
     const [withImages] = await this.attachImageUrls([campaign]);
-    return withImages;
+    return this.withStatusEvaluation(withImages);
   }
 
   private validatePresets(donationPresets: any[], tipPresets: any[]) {
@@ -242,7 +249,10 @@ export class CampaignsService {
   }
 
   async changeStatus(id: string, newStatus: string) {
-    const campaign = await this.findById(id);
+    const campaign = await this.repo.findById(id);
+    if (!campaign) {
+      throw new NotFoundException('Campaign not found');
+    }
     const allowed = ALLOWED_TRANSITIONS[campaign.status];
 
     if (!allowed.includes(newStatus)) {
@@ -250,6 +260,18 @@ export class CampaignsService {
         `Cannot change status from ${campaign.status} to ${newStatus}. Allowed: ${allowed.join(', ') || 'none (terminal state)'}`,
       );
     }
+
+    // the new rule: reactivating from COMPLETED requires the underlying goal/expiry
+    // conditions to actually be resolved first — not just an allowed enum transition
+    if (campaign.status === 'COMPLETED' && newStatus === 'ACTIVE') {
+      this.statusService.assertCanReactivate({
+        status: campaign.status,
+        goalAmount: campaign.goalAmount,
+        raisedAmount: campaign.raisedAmount,
+        expiryDate: campaign.expiryDate,
+      });
+    }
+
     const updated = await this.repo.updateStatus(id, newStatus);
     await this.invalidateCampaignCaches(campaign.slug);
     return updated;
@@ -292,8 +314,13 @@ export class CampaignsService {
     return this.cache.getOrSet(key, 60, async () => {
       const [data, total] = await this.repo.findPublicPaginated(query);
       const withImages = await this.attachImageUrls(data);
+
+      const withStatus = withImages.map((campaign) =>
+        this.withStatusEvaluation(campaign),
+      );
+
       return {
-        data: withImages,
+        data: withStatus,
         total,
         page: query.page,
         limit: query.limit,
@@ -306,5 +333,15 @@ export class CampaignsService {
     await this.cache.delByPrefix('cache:campaigns:public:');
     await this.cache.del('cache:campaigns:featured');
     if (slug) await this.cache.del(`cache:campaign:slug:${slug}`);
+  }
+
+  private withStatusEvaluation(campaign: any) {
+    const evaluation = this.statusService.evaluate({
+      status: campaign.status,
+      goalAmount: campaign.goalAmount,
+      raisedAmount: campaign.raisedAmount,
+      expiryDate: campaign.expiryDate,
+    });
+    return { ...campaign, statusEvaluation: evaluation };
   }
 }

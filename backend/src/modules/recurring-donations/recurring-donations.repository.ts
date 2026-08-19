@@ -153,4 +153,11 @@ export class RecurringDonationsRepository {
       data: { raisedAmount: { increment: amount } },
     });
   }
+
+  updateCampaignStatus(id: string, status: string) {
+    return this.prisma.campaign.update({
+      where: { id },
+      data: { status: status as any },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import Razorpay from 'razorpay';
 import * as crypto from 'crypto';
 import { DonationsRepository } from './donations.repository';
@@ -10,14 +10,19 @@ import { VerifyDonationDto } from './dto/verify-donation.dto';
 import { ExportDonationsDto } from './dto/export-donations.dto';
 import { buildDonationsWorkbook } from './excel-export.util';
 import { ReceiptsQueueService } from '../../queues/receipts/receipts-queue.service';
-import { BusinessRuleViolationException } from '../../common/exceptions/app-exceptions';
+import {
+  BusinessRuleViolationException,
+  CampaignNotAcceptingDonationsException,
+} from '../../common/exceptions/app-exceptions';
 import { FraudDetectionService } from './fraud.service';
 import { AiService } from '../ai/ai.service';
 import { CacheService } from '../../common/cache/cache.service';
+import { CampaignStatusService } from '../campaigns/campaign-status.service';
 
 @Injectable()
 export class DonationsService {
   private razorpay: Razorpay;
+  private logger = new Logger(DonationsService.name);
 
   constructor(
     private repo: DonationsRepository,
@@ -25,6 +30,7 @@ export class DonationsService {
     private fraudDetection: FraudDetectionService,
     private aiService: AiService,
     private cache: CacheService,
+    private statusService: CampaignStatusService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -37,6 +43,18 @@ export class DonationsService {
     authenticatedCustomerId: string | null,
     ipAddress?: string,
   ) {
+    const campaign = await this.repo['prisma'].campaign.findUniqueOrThrow({
+      where: { id: dto.campaignId },
+    }); // will formalize into a real repo method
+    const evaluation = this.statusService.evaluate({
+      status: campaign.status,
+      goalAmount: campaign.goalAmount,
+      raisedAmount: campaign.raisedAmount,
+      expiryDate: campaign.expiryDate,
+    });
+    if (!evaluation.canAcceptDonations) {
+      throw new CampaignNotAcceptingDonationsException();
+    }
     // --- 1. Enforce mutual exclusivity: exactly one of amount or products, never both, never neither ---
     const hasAmount = dto.donationType === 'AMOUNT';
     const hasProducts = dto.donationType === 'PRODUCT';
@@ -183,32 +201,37 @@ export class DonationsService {
       };
     }
 
-    const updatedDonation = await this.repo.updateStatus(
-      dto.razorpay_order_id,
-      {
-        status: 'PAID',
-        razorpayPaymentId: dto.razorpay_payment_id,
-        paymentMetadata: JSON.stringify({
-          id: donation.id,
-          amount: donation.amount,
-          status: donation.status,
-        }),
-      },
-    );
+    await this.repo.updateStatus(dto.razorpay_order_id, {
+      status: 'PAID',
+      razorpayPaymentId: dto.razorpay_payment_id,
+      paymentMetadata: JSON.stringify({
+        id: donation.id,
+        amount: donation.amount,
+        status: donation.status,
+      }),
+    });
 
     const updatedCampaign = await this.repo.incrementCampaignRaised(
       donation.campaignId,
       donation.amount,
     );
 
-    await this.receiptsQueue.queueGenerate(donation.id);
+    const evaluation = this.statusService.evaluate({
+      status: updatedCampaign.status,
+      goalAmount: updatedCampaign.goalAmount,
+      raisedAmount: updatedCampaign.raisedAmount,
+      expiryDate: updatedCampaign.expiryDate,
+    });
 
-    if (updatedDonation && updatedCampaign) {
-      return {
-        success: true,
-        message: 'Payment verified and donation recorded',
-      };
+    if (evaluation.shouldAutoComplete) {
+      await this.repo.updateCampaignStatus(donation.campaignId, 'COMPLETED');
+      this.logger.log(
+        `Campaign ${donation.campaignId} auto-completed: ${evaluation.completionReason}`,
+      );
     }
+
+    // fire-and-forget style, but logged — a failed receipt shouldn't fail the payment webhook response
+    await this.receiptsQueue.queueGenerate(donation.id);
   }
 
   verifyWebhookSignature(rawBody: Buffer, signature: string): boolean {
@@ -233,10 +256,25 @@ export class DonationsService {
         paymentMetadata: payment,
       });
 
-      await this.repo.incrementCampaignRaised(
+      const updatedCampaign = await this.repo.incrementCampaignRaised(
         donation.campaignId,
         donation.amount,
       );
+
+      const evaluation = this.statusService.evaluate({
+        status: updatedCampaign.status,
+        goalAmount: updatedCampaign.goalAmount,
+        raisedAmount: updatedCampaign.raisedAmount,
+        expiryDate: updatedCampaign.expiryDate,
+      });
+
+      if (evaluation.shouldAutoComplete) {
+        await this.repo.updateCampaignStatus(donation.campaignId, 'COMPLETED');
+        this.logger.log(
+          `Campaign ${donation.campaignId} auto-completed: ${evaluation.completionReason}`,
+        );
+      }
+
       // fire-and-forget style, but logged — a failed receipt shouldn't fail the payment webhook response
       await this.receiptsQueue.queueGenerate(donation.id);
     }

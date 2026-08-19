@@ -35,6 +35,7 @@ import { RedisModule } from './modules/radis/radic.module';
 import { PermissionsCacheModule } from './common/permissions-cache/permissions-cache.module';
 import { CacheModule } from './common/cache/cashe.module';
 import { ReportsQueueModule } from './queues/reports/reports-queue.module';
+import { CampaignStatusQueueModule } from './queues/campaign-status/campaign-status-queue.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { ReportsQueueModule } from './queues/reports/reports-queue.module';
     EmailModule,
     CacheModule,
     ReportsQueueModule,
+    CampaignStatusQueueModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

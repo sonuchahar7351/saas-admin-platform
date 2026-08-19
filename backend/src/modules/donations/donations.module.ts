@@ -5,9 +5,10 @@ import { DonationsRepository } from './donations.repository';
 import { ReceiptsQueueModule } from '../../queues/receipts/receipts-queue.module';
 import { FraudDetectionService } from './fraud.service';
 import { AiModule } from '../ai/ai.module';
+import { CampaignsModule } from '../campaigns/campaigns.module';
 
 @Module({
-  imports: [ReceiptsQueueModule, AiModule],
+  imports: [ReceiptsQueueModule, AiModule, CampaignsModule],
   controllers: [DonationsController],
   providers: [DonationsService, DonationsRepository, FraudDetectionService],
 })
