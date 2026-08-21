@@ -20,6 +20,7 @@ import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
 import { QueryAdminCampaignsDto } from './dto/query-admin-campaigns.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { CreateMorphCampaignDto } from './dto/create-morph-campaign.dto';
 
 @Controller('campaigns')
 export class CampaignsController {
@@ -27,6 +28,30 @@ export class CampaignsController {
     private service: CampaignsService,
     @InjectQueue('campaign-status') private campaignStatusQueue: Queue,
   ) {}
+
+  @RequirePermission('campaigns', 'read')
+  @Get('morph')
+  findMorphs(@Query('parentCampaignId') parentCampaignId?: string) {
+    return this.service.findMorphs(parentCampaignId);
+  }
+
+  @RequirePermission('campaigns', 'read')
+  @Get('morph/:id')
+  findMorphById(@Param('id') id: string) {
+    return this.service.findMorphById(id);
+  }
+
+  @RequirePermission('campaigns', 'write')
+  @Post('morph')
+  createMorph(@Body() dto: CreateMorphCampaignDto, @CurrentUser() user: any) {
+    return this.service.createMorph(dto, user.userId);
+  }
+
+  @RequirePermission('campaigns', 'read')
+  @Get(':id/source-breakdown')
+  getSourceBreakdown(@Param('id') id: string) {
+    return this.service.getSourceBreakdown(id);
+  }
 
   // public storefront browsing — active/completed only, no auth
   @Public()
@@ -51,7 +76,8 @@ export class CampaignsController {
   @Public()
   @Get('public/:slug')
   findPublicBySlug(@Param('slug') slug: string) {
-    return this.service.findPublicBySlug(slug);
+    const campaign = this.service.findPublicBySlug(slug);
+    return campaign;
   }
 
   @RequirePermission('campaigns', 'read')

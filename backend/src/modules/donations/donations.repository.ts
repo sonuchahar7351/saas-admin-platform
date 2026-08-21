@@ -126,6 +126,7 @@ export class DonationsRepository {
 
   createDonationWithProducts(data: {
     campaignId: string;
+    sourceCampaignId: string;
     customerId: string;
     billingId: string;
     donationType: 'AMOUNT' | 'PRODUCT';

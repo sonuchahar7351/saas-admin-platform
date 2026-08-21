@@ -12,6 +12,7 @@ import { FeatureCampaignDto } from './dto/feature-campaign.dto';
 import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
 import { CacheService } from '../../common/cache/cache.service';
 import { CampaignStatusService } from './campaign-status.service';
+import { CreateMorphCampaignDto } from './dto/create-morph-campaign.dto';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -107,14 +108,17 @@ export class CampaignsService {
   async findPublicBySlug(slug: string) {
     const key = `cache:campaign:slug:${slug}`;
     return this.cache.getOrSet(key, 60, async () => {
-      const campaign = await this.repo.findBySlug(slug);
+      const campaign = await this.repo.findBySlugWithParent(slug);
+
       if (
         !campaign ||
         (campaign.status !== 'ACTIVE' && campaign.status !== 'COMPLETED')
       )
         return null;
       const [withImage] = await this.attachImageUrls([campaign]);
-      return this.withStatusEvaluation(withImage);
+
+      const overlaid = await this.overlayFinancials(withImage);
+      return await this.withStatusEvaluation(overlaid);
     });
   }
 
@@ -150,7 +154,8 @@ export class CampaignsService {
     const campaign = await this.repo.findById(id);
     if (!campaign) throw new NotFoundException('Campaign not found');
     const [withImages] = await this.attachImageUrls([campaign]);
-    return this.withStatusEvaluation(withImages);
+    const overlaid = this.overlayFinancials(withImages);
+    return this.withStatusEvaluation(overlaid);
   }
 
   private validatePresets(donationPresets: any[], tipPresets: any[]) {
@@ -231,6 +236,15 @@ export class CampaignsService {
 
   async update(id: string, dto: UpdateCampaignDto) {
     const existing = await this.findById(id);
+
+    if (
+      existing.isMorph &&
+      (dto.goalAmount !== undefined || (dto as any).expiryDate !== undefined)
+    ) {
+      throw new BadRequestException(
+        'Goal amount and expiry date are managed by the parent campaign for Morph Campaigns.',
+      );
+    }
 
     if (dto.donationPresets || dto.tipPresets) {
       this.validatePresets(
@@ -343,5 +357,68 @@ export class CampaignsService {
       expiryDate: campaign.expiryDate,
     });
     return { ...campaign, statusEvaluation: evaluation };
+  }
+
+  private overlayFinancials(campaign: any) {
+    if (!campaign.isMorph || !campaign.parent) return campaign;
+    return {
+      ...campaign,
+      goalAmount: campaign.parent.goalAmount,
+      raisedAmount: campaign.parent.raisedAmount,
+      expiryDate: campaign.parent.expiryDate,
+      status: campaign.parent.status, // whether donations can happen — always the parent's call
+    };
+  }
+
+  async createMorph(dto: CreateMorphCampaignDto, createdById: string) {
+    const parent = await this.repo.findRawById(dto.parentCampaignId);
+    if (!parent) throw new NotFoundException('Parent campaign not found');
+    if (parent.isMorph) {
+      throw new ConflictException(
+        'A Morph Campaign cannot be used as the parent campaign. Please select a normal campaign.',
+      );
+    }
+
+    const slug = await this.generateUniqueSlug(dto.title);
+
+    return this.repo.createMorphFromParent(
+      parent,
+      dto.title,
+      slug,
+      createdById,
+    );
+  }
+
+  async findMorphs(parentCampaignId?: string) {
+    const morphs = await this.repo.findMorphs(parentCampaignId);
+    return this.attachImageUrls(morphs); // reuses your existing batch image resolver, unchanged
+  }
+
+  async findMorphById(id: string) {
+    const morph = await this.repo.findMorphById(id);
+    if (!morph || !morph.isMorph)
+      throw new NotFoundException('Morph campaign not found');
+
+    const [withImage] = await this.attachImageUrls([morph]);
+    const overlaid = this.overlayFinancials(withImage);
+    return this.withStatusEvaluation(overlaid);
+  }
+
+  async getSourceBreakdown(parentCampaignId: string) {
+    const rows = await this.repo.getSourceBreakdown(parentCampaignId);
+    const sourceIds = rows.map((r) => r.sourceCampaignId);
+    const sources = await Promise.all(
+      sourceIds.map((id) => this.repo.findRawById(id)),
+    );
+    const nameById = new Map(
+      sources.filter(Boolean).map((s) => [s!.id, s!.title]),
+    );
+
+    return rows.map((r) => ({
+      sourceCampaignId: r.sourceCampaignId,
+      sourceTitle: nameById.get(r.sourceCampaignId) || 'Unknown',
+      totalAmount: r._sum.amount || 0,
+      donationCount: r._count.id,
+    }));
   }
 }

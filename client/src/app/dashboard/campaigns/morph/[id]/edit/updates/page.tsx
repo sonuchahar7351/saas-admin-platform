@@ -11,17 +11,14 @@ import {
   ImagePlus,
   X,
 } from "lucide-react";
-import { updatesApi, UpdateRecord } from "../../../../../../lib/updates-api";
-import { campaignsApi } from "../../../../../../lib/campaigns-api";
-import {
-  RichEditor,
-  RichEditorHandle,
-} from "../../../../../../components/editor/RichEditor";
-import { MediaPickerModal } from "../../../../../../components/media/MediaPickerModal";
 
 import { useRef } from "react";
 import { Upload, Loader2 } from "lucide-react";
-import { mediaApi } from "../../../../../../lib/media-api";
+import { UpdateRecord, updatesApi } from "@/lib/updates-api";
+import { mediaApi } from "@/lib/media-api";
+import { MediaPickerModal } from "@/components/media/MediaPickerModal";
+import { RichEditor, RichEditorHandle } from "@/components/editor/RichEditor";
+import { campaignsApi } from "@/lib/campaigns-api";
 
 function GlimpseSection({
   update,
@@ -42,7 +39,7 @@ function GlimpseSection({
     setActiveGlimpseId(null);
     setPickerOpen(true);
   };
-  
+
   const handleAddToExisting = (glimpseId: string) => {
     setActiveGlimpseId(glimpseId);
     setPickerOpen(true);

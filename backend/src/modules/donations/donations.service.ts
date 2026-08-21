@@ -18,6 +18,7 @@ import { FraudDetectionService } from './fraud.service';
 import { AiService } from '../ai/ai.service';
 import { CacheService } from '../../common/cache/cache.service';
 import { CampaignStatusService } from '../campaigns/campaign-status.service';
+import { CampaignsRepository } from '../campaigns/campaigns.repository';
 
 @Injectable()
 export class DonationsService {
@@ -31,6 +32,7 @@ export class DonationsService {
     private aiService: AiService,
     private cache: CacheService,
     private statusService: CampaignStatusService,
+    private campaignsRepo: CampaignsRepository,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -43,18 +45,27 @@ export class DonationsService {
     authenticatedCustomerId: string | null,
     ipAddress?: string,
   ) {
-    const campaign = await this.repo['prisma'].campaign.findUniqueOrThrow({
-      where: { id: dto.campaignId },
-    }); // will formalize into a real repo method
+    const sourceCampaign = await this.campaignsRepo.findRawById(dto.campaignId); // inject CampaignsRepository
+    if (!sourceCampaign) throw new NotFoundException('Campaign not found');
+
+    const financialCampaignId = sourceCampaign.isMorph
+      ? sourceCampaign.parentCampaignId!
+      : sourceCampaign.id;
+
+    const financialCampaign = sourceCampaign.isMorph
+      ? await this.campaignsRepo.findRawById(financialCampaignId)
+      : sourceCampaign;
+
     const evaluation = this.statusService.evaluate({
-      status: campaign.status,
-      goalAmount: campaign.goalAmount,
-      raisedAmount: campaign.raisedAmount,
-      expiryDate: campaign.expiryDate,
+      status: financialCampaign!.status,
+      goalAmount: financialCampaign!.goalAmount,
+      raisedAmount: financialCampaign!.raisedAmount,
+      expiryDate: financialCampaign!.expiryDate,
     });
-    if (!evaluation.canAcceptDonations) {
+
+    if (!evaluation.canAcceptDonations)
       throw new CampaignNotAcceptingDonationsException();
-    }
+
     // --- 1. Enforce mutual exclusivity: exactly one of amount or products, never both, never neither ---
     const hasAmount = dto.donationType === 'AMOUNT';
     const hasProducts = dto.donationType === 'PRODUCT';
@@ -144,10 +155,9 @@ export class DonationsService {
       receipt: `donation_${Date.now()}`,
     });
 
-    console.log(order);
-
     const donation = await this.repo.createDonationWithProducts({
-      campaignId: dto.campaignId,
+      campaignId: financialCampaignId, // ALWAYS the financial parent — same as before this feature existed
+      sourceCampaignId: sourceCampaign.id,
       customerId,
       billingId: billing.id,
       donationType: dto.donationType,

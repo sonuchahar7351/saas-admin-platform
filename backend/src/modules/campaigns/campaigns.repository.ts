@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -98,6 +99,7 @@ export class CampaignsRepository {
     const { categoryId, search, status, sortBy, page, limit } = query;
 
     const where: any = {
+      isMorph: false,
       status: status ? status : { in: ['ACTIVE', 'COMPLETED'] }, // Explore shows both by default; homepage narrows to ACTIVE
       ...(categoryId && { categoryId }),
       ...(search && {
@@ -131,5 +133,172 @@ export class CampaignsRepository {
       }),
       this.prisma.campaign.count({ where }),
     ]);
+  }
+
+  findRawById(id: string) {
+    return this.prisma.campaign.findUnique({ where: { id } });
+  }
+
+  findBySlugWithParent(slug: string) {
+    return this.prisma.campaign.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        ngo: true,
+        parent: {
+          select: {
+            goalAmount: true,
+            raisedAmount: true,
+            expiryDate: true,
+            status: true,
+          },
+        },
+      },
+    });
+  }
+
+  findMorphs(parentCampaignId?: string) {
+    return this.prisma.campaign.findMany({
+      where: { isMorph: true, ...(parentCampaignId && { parentCampaignId }) },
+      orderBy: { createdAt: 'desc' },
+      include: { parent: { select: { id: true, title: true, slug: true } } },
+    });
+  }
+
+  findMorphById(id: string) {
+    return this.prisma.campaign.findUnique({
+      where: { id },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            goalAmount: true,
+            raisedAmount: true,
+            expiryDate: true,
+            status: true,
+          },
+        },
+        category: true,
+        ngo: true,
+      },
+    });
+  }
+
+  // deep-copies content into a new Morph row, in one transaction — all or nothing
+  async createMorphFromParent(
+    parent: any,
+    title: string,
+    slug: string,
+    createdById: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const morph = await tx.campaign.create({
+        data: {
+          title,
+          slug,
+          ngoId: parent.ngoId,
+          categoryId: parent.categoryId,
+          shortDescription: parent.shortDescription,
+          story: parent.story,
+          cardImageId: parent.cardImageId,
+          bannerImageIds: parent.bannerImageIds,
+          isAddress: parent.isAddress,
+          donationPresets: parent.donationPresets,
+          tipPresets: parent.tipPresets,
+          goalAmount: parent.goalAmount,
+          raisedAmount: 0,
+          expiryDate: parent.expiryDate,
+          status: 'CREATED',
+          isMorph: true,
+          parentCampaignId: parent.id,
+          createdById,
+        },
+      });
+
+      const [journeys, testimonials, updates, products] = await Promise.all([
+        tx.campaignJourney.findMany({ where: { campaignId: parent.id } }),
+        tx.testimonial.findMany({ where: { campaignId: parent.id } }),
+        tx.update.findMany({
+          where: { campaignId: parent.id },
+          include: { glimpses: { include: { images: true } } },
+        }),
+        tx.product.findMany({ where: { campaignId: parent.id } }),
+      ]);
+
+      if (journeys.length) {
+        await tx.campaignJourney.createMany({
+          data: journeys.map((j) => ({
+            campaignId: morph.id,
+            imageId: j.imageId,
+            title: j.title,
+            description: j.description,
+            order: j.order,
+          })),
+        });
+      }
+      if (testimonials.length) {
+        await tx.testimonial.createMany({
+          data: testimonials.map((t) => ({
+            campaignId: morph.id,
+            imageId: t.imageId,
+            name: t.name,
+            designation: t.designation,
+            description: t.description,
+            isActive: t.isActive,
+          })),
+        });
+      }
+      if (products.length) {
+        await tx.product.createMany({
+          data: products.map((p) => ({
+            campaignId: morph.id,
+            imageId: p.imageId,
+            title: p.title,
+            description: p.description,
+            quantity: p.quantity,
+            priority: p.priority,
+            amount: p.amount,
+            type: p.type,
+            isActive: p.isActive,
+          })),
+        });
+      }
+      for (const u of updates) {
+        const newUpdate = await tx.update.create({
+          data: {
+            campaignId: morph.id,
+            title: u.title,
+            content: u.content ?? Prisma.JsonNull,
+          },
+        });
+        for (const g of u.glimpses) {
+          await tx.glimpse.create({
+            data: {
+              updateId: newUpdate.id,
+              order: g.order,
+              images: {
+                create: g.images.map((img) => ({
+                  mediaId: img.mediaId,
+                  order: img.order,
+                })),
+              },
+            },
+          });
+        }
+      }
+
+      return morph;
+    });
+  }
+
+  getSourceBreakdown(parentCampaignId: string) {
+    return this.prisma.donation.groupBy({
+      by: ['sourceCampaignId'],
+      where: { campaignId: parentCampaignId, status: 'PAID' },
+      _sum: { amount: true },
+      _count: { id: true },
+    });
   }
 }

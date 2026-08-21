@@ -7,9 +7,7 @@ import { CampaignStatusService } from './campaign-status.service';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: 'campaign-status' }), // registers the queue connection for this module too
-  ],
+  imports: [BullModule.registerQueue({ name: 'campaign-status' })],
   controllers: [CampaignsController],
   providers: [
     CampaignsService,
@@ -17,6 +15,6 @@ import { BullModule } from '@nestjs/bullmq';
     MediaRepository,
     CampaignStatusService,
   ],
-  exports: [CampaignsService, CampaignStatusService],
+  exports: [CampaignsService, CampaignStatusService, CampaignsRepository],
 })
 export class CampaignsModule {}

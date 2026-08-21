@@ -16,6 +16,11 @@ export const navItems: NavItem[] = [
     roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],
   },
   {
+    label: "Morph Campaigns",
+    href: "/dashboard/campaigns/morph",
+    roles: ["SUPER_ADMIN", "SUB_ADMIN"],
+  },
+  {
     label: "Categories",
     href: "/dashboard/categories",
     roles: ["SUPER_ADMIN", "SUB_ADMIN", "ADMIN"],

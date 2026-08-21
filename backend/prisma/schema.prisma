@@ -245,18 +245,26 @@ model Campaign {
   createdById      String
   createdBy        User           @relation(fields: [createdById], references: [id])
 
-  products     Product[]
-  journeys     CampaignJourney[]
-  testimonials Testimonial[]
-  updates      Update[]
-  donations    Donation[]
-  bannerImageIds String[] @default([])
+  products         Product[]
+  journeys         CampaignJourney[]
+  testimonials     Testimonial[]
+  updates          Update[]
+  bannerImageIds   String[] @default([])
   isFeatured           Boolean  @default(false)
   featuredOrder         Int?     // null = not ordered; lower number = higher priority
   featureImageDesktopId String?
   featureImageMobileId  String?
   isAddress             Boolean  @default(false) // whether checkout requires city/state/street
   recurringDonations RecurringDonation[]
+
+  isMorph           Boolean    @default(false)
+  parentCampaignId  String?
+  parent            Campaign?  @relation("CampaignMorphs", fields: [parentCampaignId], references: [id])
+  morphs            Campaign[] @relation("CampaignMorphs")
+  donations         Donation[] @relation("DonationCampaign")       // financial owner
+  sourcedDonations  Donation[] @relation("DonationSourceCampaign") // tracking — which version was viewed
+
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -386,7 +394,7 @@ enum DonationType {
 model Donation {
   id                String         @id @default(uuid())
   campaignId        String
-  campaign          Campaign       @relation(fields: [campaignId], references: [id])
+  campaign          Campaign       @relation("DonationCampaign", fields: [campaignId],   references: [id])
   customerId        String
   customer          Customer       @relation(fields: [customerId], references: [id])
 
@@ -410,6 +418,9 @@ model Donation {
   recurringDonation    RecurringDonation? @relation(fields: [recurringDonationId], references: [id])
   ipAddress String?
   fraudFlags FraudFlag[]
+
+  sourceCampaignId String
+  sourceCampaign   Campaign  @relation("DonationSourceCampaign", fields: [sourceCampaignId],references: [id]  )
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
