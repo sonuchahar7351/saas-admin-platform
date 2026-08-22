@@ -105,6 +105,12 @@ export class CampaignsController {
   }
 
   @RequirePermission('campaigns', 'write')
+  @Patch('morph/:id/slug')
+  updateMorphSlug(@Param('id') id: string, @Body('slug') slug: string) {
+    return this.service.updateMorphSlug(id, slug);
+  }
+
+  @RequirePermission('campaigns', 'write')
   @Patch(':id/status')
   changeStatus(@Param('id') id: string, @Body() dto: ChangeStatusDto) {
     return this.service.changeStatus(id, dto.status);

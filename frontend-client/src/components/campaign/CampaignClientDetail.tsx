@@ -84,7 +84,12 @@ export function CampaignDetailClient({ campaign }: { campaign: any }) {
             <ProductsSection campaignId={campaign.id} />
           </div>
 
-          {campaign.story && <StoryRenderer content={campaign.story} />}
+          {campaign.story && (
+            <>
+              <h2 className="mb-4 font-heading text-xl font-semibold">Story</h2>
+              <StoryRenderer content={campaign.story} />
+            </>
+          )}
 
           <JourneyTimeline campaignId={campaign.id} />
           <UpdatesTimeline campaignId={campaign.id} />

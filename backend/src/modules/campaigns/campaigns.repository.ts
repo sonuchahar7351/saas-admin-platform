@@ -11,6 +11,7 @@ export class CampaignsRepository {
       where: {
         ...(filters.status && { status: filters.status as any }),
         ...(filters.categoryId && { categoryId: filters.categoryId }),
+        isMorph: false,
       },
       include: { category: true, ngo: true },
       orderBy: { createdAt: 'desc' },
@@ -26,6 +27,7 @@ export class CampaignsRepository {
   }) {
     const { status, categoryId, search, page, limit } = query;
     const where: any = {
+      isMorph: false,
       ...(status && { status }),
       ...(categoryId && { categoryId }),
       ...(search && {
@@ -154,14 +156,6 @@ export class CampaignsRepository {
           },
         },
       },
-    });
-  }
-
-  findMorphs(parentCampaignId?: string) {
-    return this.prisma.campaign.findMany({
-      where: { isMorph: true, ...(parentCampaignId && { parentCampaignId }) },
-      orderBy: { createdAt: 'desc' },
-      include: { parent: { select: { id: true, title: true, slug: true } } },
     });
   }
 
@@ -299,6 +293,48 @@ export class CampaignsRepository {
       where: { campaignId: parentCampaignId, status: 'PAID' },
       _sum: { amount: true },
       _count: { id: true },
+    });
+  }
+
+  cascadeCompleteMorphs(parentCampaignId: string) {
+    return this.prisma.campaign.updateMany({
+      where: {
+        parentCampaignId,
+        isMorph: true,
+        status: { in: ['ACTIVE', 'CREATED'] },
+      },
+      data: { status: 'COMPLETED' },
+    });
+  }
+
+  findMorphs(parentCampaignId?: string) {
+    return this.prisma.campaign.findMany({
+      where: { isMorph: true, ...(parentCampaignId && { parentCampaignId }) },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            status: true,
+            goalAmount: true,
+            raisedAmount: true,
+            expiryDate: true,
+          },
+        },
+      },
+    });
+  }
+
+  async updateMorphSlug(id: string, newSlug: string) {
+    const exists = await this.prisma.campaign.findUnique({
+      where: { slug: newSlug },
+    });
+    if (exists) return null; // signals "slug taken" to the service layer
+    return this.prisma.campaign.update({
+      where: { id },
+      data: { slug: newSlug },
     });
   }
 }

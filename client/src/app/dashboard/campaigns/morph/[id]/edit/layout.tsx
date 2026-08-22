@@ -53,17 +53,25 @@ export default function MorphEditLayout({
       </div>
 
       {morph?.parent && (
-        <div className="mb-5 flex items-center justify-between rounded-lg border border-purple-100 bg-purple-50 px-4 py-2.5 text-sm">
-          <span className="text-purple-700">
-            Financial data (goal, raised amount, expiry, donation eligibility)
-            is managed by the parent campaign.
-          </span>
-          <Link
-            href={`/dashboard/campaigns/${morph.parent.id}/edit`}
-            className="flex items-center gap-1 font-medium text-purple-700 hover:underline"
-          >
-            View parent <ArrowUpRight size={13} />
-          </Link>
+        <div className="mb-5 space-y-2">
+          <div className="flex items-center justify-between rounded-lg border border-purple-100 bg-purple-50 px-4 py-2.5 text-sm">
+            <span className="text-purple-700">
+              Goal, raised amount, and expiry are shared with the parent
+              campaign.
+            </span>
+            <Link
+              href={`/dashboard/campaigns/${morph.parent.id}/edit`}
+              className="flex items-center gap-1 font-medium text-purple-700 hover:underline"
+            >
+              View parent <ArrowUpRight size={13} />
+            </Link>
+          </div>
+          {morph.parentStatus === "COMPLETED" && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+              The parent campaign has completed — this Morph no longer accepts
+              donations, regardless of its own status.
+            </div>
+          )}
         </div>
       )}
 

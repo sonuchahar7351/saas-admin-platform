@@ -19,6 +19,7 @@ import { AiService } from '../ai/ai.service';
 import { CacheService } from '../../common/cache/cache.service';
 import { CampaignStatusService } from '../campaigns/campaign-status.service';
 import { CampaignsRepository } from '../campaigns/campaigns.repository';
+import { CampaignsService } from '../campaigns/campaigns.service';
 
 @Injectable()
 export class DonationsService {
@@ -33,6 +34,7 @@ export class DonationsService {
     private cache: CacheService,
     private statusService: CampaignStatusService,
     private campaignsRepo: CampaignsRepository,
+    private campaignsService: CampaignsService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -235,6 +237,9 @@ export class DonationsService {
 
     if (evaluation.shouldAutoComplete) {
       await this.repo.updateCampaignStatus(donation.campaignId, 'COMPLETED');
+      await this.campaignsService.cascadeCompleteMorphsForParent(
+        donation.campaignId,
+      ); // NEW
       this.logger.log(
         `Campaign ${donation.campaignId} auto-completed: ${evaluation.completionReason}`,
       );
@@ -280,6 +285,9 @@ export class DonationsService {
 
       if (evaluation.shouldAutoComplete) {
         await this.repo.updateCampaignStatus(donation.campaignId, 'COMPLETED');
+        await this.campaignsService.cascadeCompleteMorphsForParent(
+          donation.campaignId,
+        ); // NEW
         this.logger.log(
           `Campaign ${donation.campaignId} auto-completed: ${evaluation.completionReason}`,
         );

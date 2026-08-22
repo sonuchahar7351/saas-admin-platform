@@ -32,7 +32,7 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <div className="flex h-screen">
-        <aside className="w-64 flex-col bg-sidebar-bg px-4 py-5 h-screen scrollbar-thin overflow-y-auto">
+        <aside className="w-70 flex-col bg-sidebar-bg px-4 py-5 h-screen scrollbar-thin overflow-y-auto">
           <div className="mb-8 flex items-center gap-2 px-2">
             <div className="h-6 w-6 rounded bg-accent" />
             <span className="font-display text-sm font-semibold text-white">

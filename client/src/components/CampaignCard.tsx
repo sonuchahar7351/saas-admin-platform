@@ -19,8 +19,8 @@ function daysRemaining(expiryDate: string): number {
 }
 
 const NEXT_STATUS: Record<string, string[]> = {
-  CREATED: ["ACTIVE", "DELETED"],
-  ACTIVE: ["COMPLETED", "DELETED"],
+  CREATED: ["ACTIVE", "DELETED", "COMPLETED"],
+  ACTIVE: ["COMPLETED", "DELETED", "CREATED"],
   COMPLETED: ["DELETED", "ACTIVE"],
   DELETED: ["ACTIVE"],
 };
@@ -110,7 +110,11 @@ export function CampaignCard({
               </a>
             )}
             <Link
-              href={`/dashboard/campaigns/${campaign.id}/edit`}
+              href={
+                campaign.isMorph
+                  ? `/dashboard/campaigns/morph/${campaign.id}/edit`
+                  : `/dashboard/campaigns/${campaign.id}/edit`
+              }
               className="rounded-md p-1.5 text-text-secondary hover:bg-bg hover:text-text-primary"
               title="Edit"
             >

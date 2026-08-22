@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CampaignStatusService } from '../../modules/campaigns/campaign-status.service';
+import { CampaignsService } from '../../modules/campaigns/campaigns.service';
 
 @Processor('campaign-status')
 export class CampaignStatusProcessor extends WorkerHost {
@@ -11,6 +12,7 @@ export class CampaignStatusProcessor extends WorkerHost {
   constructor(
     private prisma: PrismaService,
     private statusService: CampaignStatusService,
+    private campaignsService: CampaignsService,
   ) {
     super();
   }
@@ -19,7 +21,7 @@ export class CampaignStatusProcessor extends WorkerHost {
     if (job.name !== 'sweep-campaigns') return;
 
     const activeCampaigns = await this.prisma.campaign.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', isMorph: false },
     });
     let completed = 0;
 
@@ -35,6 +37,7 @@ export class CampaignStatusProcessor extends WorkerHost {
           where: { id: campaign.id },
           data: { status: 'COMPLETED' },
         });
+        await this.campaignsService.cascadeCompleteMorphsForParent(campaign.id); // NEW
         completed++;
       }
     }

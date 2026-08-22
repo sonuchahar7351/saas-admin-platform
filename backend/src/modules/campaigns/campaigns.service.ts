@@ -16,8 +16,8 @@ import { CreateMorphCampaignDto } from './dto/create-morph-campaign.dto';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  CREATED: ['ACTIVE', 'DELETED'],
-  ACTIVE: ['COMPLETED', 'DELETED'],
+  CREATED: ['ACTIVE', 'DELETED', 'COMPLETED'],
+  ACTIVE: ['COMPLETED', 'DELETED', 'CREATED'],
   COMPLETED: ['DELETED', 'ACTIVE'],
   DELETED: ['ACTIVE'],
 };
@@ -50,7 +50,9 @@ export class CampaignsService {
 
   async findFeatured() {
     return this.cache.getOrSet('cache:campaigns:featured', 60, async () => {
-      const campaigns = await this.repo.findAll({ status: 'ACTIVE' });
+      const campaigns = await this.repo.findAll({
+        status: 'ACTIVE',
+      });
       const featured = campaigns
         .filter((c) => c.isFeatured)
         .sort((a, b) => (a.featuredOrder ?? 0) - (b.featuredOrder ?? 0));
@@ -117,8 +119,8 @@ export class CampaignsService {
         return null;
       const [withImage] = await this.attachImageUrls([campaign]);
 
-      const overlaid = await this.overlayFinancials(withImage);
-      return await this.withStatusEvaluation(overlaid);
+      // const overlaid = await this.overlayFinancials(withImage);
+      return await this.withStatusEvaluation(withImage);
     });
   }
 
@@ -138,7 +140,7 @@ export class CampaignsService {
     const withImages = await this.attachImageUrls(data);
 
     const withStatus = withImages.map((campaign) =>
-      this.withStatusEvaluation(campaign),
+      this.overlayFinancials(campaign),
     );
 
     return {
@@ -155,7 +157,7 @@ export class CampaignsService {
     if (!campaign) throw new NotFoundException('Campaign not found');
     const [withImages] = await this.attachImageUrls([campaign]);
     const overlaid = this.overlayFinancials(withImages);
-    return this.withStatusEvaluation(overlaid);
+    return overlaid;
   }
 
   private validatePresets(donationPresets: any[], tipPresets: any[]) {
@@ -263,27 +265,33 @@ export class CampaignsService {
   }
 
   async changeStatus(id: string, newStatus: string) {
-    const campaign = await this.repo.findById(id);
-    if (!campaign) {
-      throw new NotFoundException('Campaign not found');
-    }
+    const campaign = await this.repo.findRawById(id);
+    if (!campaign) throw new NotFoundException('Campaign not found');
     const allowed = ALLOWED_TRANSITIONS[campaign.status];
-
     if (!allowed.includes(newStatus)) {
       throw new BadRequestException(
         `Cannot change status from ${campaign.status} to ${newStatus}. Allowed: ${allowed.join(', ') || 'none (terminal state)'}`,
       );
     }
 
-    // the new rule: reactivating from COMPLETED requires the underlying goal/expiry
-    // conditions to actually be resolved first — not just an allowed enum transition
     if (campaign.status === 'COMPLETED' && newStatus === 'ACTIVE') {
-      this.statusService.assertCanReactivate({
-        status: campaign.status,
-        goalAmount: campaign.goalAmount,
-        raisedAmount: campaign.raisedAmount,
-        expiryDate: campaign.expiryDate,
-      });
+      if (campaign.isMorph) {
+        const parent = await this.repo.findRawById(campaign.parentCampaignId!);
+        if (!parent) throw new NotFoundException('Parent campaign not found');
+        this.statusService.assertCanReactivate({
+          status: 'COMPLETED',
+          goalAmount: parent.goalAmount,
+          raisedAmount: parent.raisedAmount,
+          expiryDate: parent.expiryDate,
+        });
+      } else {
+        this.statusService.assertCanReactivate({
+          status: campaign.status,
+          goalAmount: campaign.goalAmount,
+          raisedAmount: campaign.raisedAmount,
+          expiryDate: campaign.expiryDate,
+        });
+      }
     }
 
     const updated = await this.repo.updateStatus(id, newStatus);
@@ -330,7 +338,7 @@ export class CampaignsService {
       const withImages = await this.attachImageUrls(data);
 
       const withStatus = withImages.map((campaign) =>
-        this.withStatusEvaluation(campaign),
+        this.overlayFinancials(campaign),
       );
 
       return {
@@ -349,16 +357,6 @@ export class CampaignsService {
     if (slug) await this.cache.del(`cache:campaign:slug:${slug}`);
   }
 
-  private withStatusEvaluation(campaign: any) {
-    const evaluation = this.statusService.evaluate({
-      status: campaign.status,
-      goalAmount: campaign.goalAmount,
-      raisedAmount: campaign.raisedAmount,
-      expiryDate: campaign.expiryDate,
-    });
-    return { ...campaign, statusEvaluation: evaluation };
-  }
-
   private overlayFinancials(campaign: any) {
     if (!campaign.isMorph || !campaign.parent) return campaign;
     return {
@@ -368,6 +366,40 @@ export class CampaignsService {
       expiryDate: campaign.parent.expiryDate,
       status: campaign.parent.status, // whether donations can happen — always the parent's call
     };
+  }
+
+  private async withStatusEvaluation(campaign: any) {
+    if (campaign.isMorph && campaign.parent) {
+      const parentEvaluation = this.statusService.evaluate({
+        status: campaign.parent.status,
+        goalAmount: campaign.parent.goalAmount,
+        raisedAmount: campaign.parent.raisedAmount,
+        expiryDate: campaign.parent.expiryDate,
+      });
+
+      return {
+        ...campaign,
+        goalAmount: campaign.parent.goalAmount, // shared pool numbers, for display
+        raisedAmount: campaign.parent.raisedAmount,
+        expiryDate: campaign.parent.expiryDate,
+        parentStatus: campaign.parent.status, // NEW — informational, separate from the morph's own status
+        statusEvaluation: {
+          ...parentEvaluation,
+          // a morph can only actually accept donations if IT is published AND the shared pool is still open
+          canAcceptDonations:
+            campaign.status === 'ACTIVE' && parentEvaluation.canAcceptDonations,
+        },
+        // campaign.status is left completely untouched — this is the actual fix
+      };
+    }
+
+    const evaluation = this.statusService.evaluate({
+      status: campaign.status,
+      goalAmount: campaign.goalAmount,
+      raisedAmount: campaign.raisedAmount,
+      expiryDate: campaign.expiryDate,
+    });
+    return { ...campaign, statusEvaluation: evaluation };
   }
 
   async createMorph(dto: CreateMorphCampaignDto, createdById: string) {
@@ -400,8 +432,7 @@ export class CampaignsService {
       throw new NotFoundException('Morph campaign not found');
 
     const [withImage] = await this.attachImageUrls([morph]);
-    const overlaid = this.overlayFinancials(withImage);
-    return this.withStatusEvaluation(overlaid);
+    return this.withStatusEvaluation(withImage);
   }
 
   async getSourceBreakdown(parentCampaignId: string) {
@@ -420,5 +451,26 @@ export class CampaignsService {
       totalAmount: r._sum.amount || 0,
       donationCount: r._count.id,
     }));
+  }
+
+  async cascadeCompleteMorphsForParent(parentCampaignId: string) {
+    const result = await this.repo.cascadeCompleteMorphs(parentCampaignId);
+    if (result.count > 0) {
+      await this.cache.delByPrefix('cache:campaign:slug:'); // any of those morphs' cached pages are now stale
+    }
+    return result;
+  }
+
+  async updateMorphSlug(id: string, newSlug: string) {
+    const campaign = await this.repo.findRawById(id);
+    if (!campaign || !campaign.isMorph)
+      throw new NotFoundException('Morph campaign not found');
+
+    const updated = await this.repo.updateMorphSlug(id, newSlug);
+    if (!updated) throw new ConflictException('That slug is already in use.');
+
+    await this.cache.del(`cache:campaign:slug:${campaign.slug}`); // old slug's cache
+    await this.cache.del(`cache:campaign:slug:${newSlug}`); // just in case anything cached a "not found" there
+    return updated;
   }
 }

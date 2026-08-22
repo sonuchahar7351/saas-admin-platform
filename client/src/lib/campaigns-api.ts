@@ -17,6 +17,8 @@ export interface CampaignRecord {
   featuredOrder?: number;
   isFeatured?: boolean;
   isAddress: boolean;
+  isMorph: boolean;
+  parentCampaignId?: string | null;
 }
 
 export interface CreateCampaignPayload {

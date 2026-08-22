@@ -15,6 +15,7 @@ import {
 } from './dto/query-recurring.dto';
 import { buildRecurringWorkbook } from './excel-export.util';
 import { CampaignStatusService } from '../campaigns/campaign-status.service';
+import { CampaignsService } from '../campaigns/campaigns.service';
 
 // Razorpay requires a finite total_count of billing cycles — there's no "forever" option.
 // We use a large-but-finite count per frequency (roughly a 5-year horizon) and let
@@ -44,6 +45,7 @@ export class RecurringDonationsService {
     private repo: RecurringDonationsRepository,
     private customerResolution: CustomerResolutionService,
     private statusService: CampaignStatusService,
+    private campaignsService: CampaignsService,
   ) {
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -289,6 +291,9 @@ export class RecurringDonationsService {
 
         if (evaluation.shouldAutoComplete) {
           await this.repo.updateCampaignStatus(record.campaignId, 'COMPLETED');
+          await this.campaignsService.cascadeCompleteMorphsForParent(
+            record.campaignId,
+          ); // NEW
           this.logger.log(
             `Campaign ${record.campaignId} auto-completed: ${evaluation.completionReason}`,
           );
