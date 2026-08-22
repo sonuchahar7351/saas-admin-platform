@@ -8,6 +8,7 @@ import { loadRazorpayScript } from "@/lib/load-razorpay";
 import { donationsApi } from "@/lib/donations-api";
 import { recurringDonationsApi } from "@/lib/recurring-donations-api";
 import { Currency } from "lucide-react";
+import { showError, showWarning } from "@/lib/toast";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -68,15 +69,15 @@ export default function CheckoutPage() {
     setError("");
 
     if (!donor.name || !donor.email || !donor.pincode) {
-      setError("Please fill in your name, email, and pincode.");
+      showWarning("Please fill in your name, email, and pincode.");
       return;
     }
     if (isAddress && (!donor.city || !donor.state || !donor.streetAddress)) {
-      setError("This campaign requires a full address.");
+      showWarning("This campaign requires a full address.");
       return;
     }
     if (!customer && !guestPassword) {
-      setError(
+      showWarning(
         "Please set a password to continue — this creates your donor account.",
       );
       return;
@@ -118,9 +119,7 @@ export default function CheckoutPage() {
         };
         new (window as any).Razorpay(options).open();
       } catch (err: any) {
-        setError(
-          err.response?.data?.message || "Could not set up recurring donation.",
-        );
+        showError(err);
         setSubmitting(false);
       }
       return;
@@ -195,7 +194,7 @@ export default function CheckoutPage() {
 
       rzp.open();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Could not start checkout.");
+      showError(err);
       setSubmitting(false);
     }
   };

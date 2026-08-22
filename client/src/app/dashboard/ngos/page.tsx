@@ -5,6 +5,7 @@ import { Plus, Trash2, Pencil } from "lucide-react";
 import { NgoRecord, ngosApi } from "@/lib/ngo-api";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { showError, showSuccess } from "@/lib/toast";
 
 function NgosContent() {
   const [items, setItems] = useState<NgoRecord[]>([]);
@@ -31,12 +32,15 @@ function NgosContent() {
     if (!editing?.name) return;
     setError("");
     try {
-      if (editing.id) await ngosApi.update(editing.id, editing);
-      else await ngosApi.create(editing);
+      if (editing.id) {
+        await ngosApi.update(editing.id, editing);
+        showSuccess("NGO updated successfully");
+      } else await ngosApi.create(editing);
+      showSuccess("NGO created successfully");
       setEditing(null);
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Could not save.");
+      showError(err);
     }
   };
 
@@ -44,12 +48,10 @@ function NgosContent() {
     if (!confirm("Delete this NGO?")) return;
     try {
       await ngosApi.delete(id);
+      showSuccess("NGO deleted");
       load();
     } catch (err: any) {
-      alert(
-        err.response?.data?.message ||
-          "Could not delete — it may still be in use by a campaign.",
-      );
+      showError(err);
     }
   };
 

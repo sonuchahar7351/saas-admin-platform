@@ -9,6 +9,7 @@ import { navItems } from "../../config/nav-items";
 import { authApi } from "../../lib/auth-api";
 import { Avatar } from "../../components/Avatar";
 import { RoleBadge } from "../../components/RoleBadge";
+import { showInfo } from "@/lib/toast";
 
 export default function DashboardLayout({
   children,
@@ -22,6 +23,7 @@ export default function DashboardLayout({
   const handleLogout = async () => {
     await authApi.logout();
     clearAuth();
+    showInfo("Logged out.");
     router.push("/login");
   };
 

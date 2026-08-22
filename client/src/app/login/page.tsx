@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "../../lib/auth-api";
 import { useAuthStore } from "../../store/auth-store";
+import { showError, showSuccess } from "@/lib/toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,9 +19,10 @@ export default function LoginPage() {
     try {
       const { data } = await authApi.login(email, password);
       setAuth(data.user, data.accessToken);
+      showSuccess(`Welcome back, ${data.user.name}`);
       router.push("/dashboard");
-    } catch {
-      setError("Invalid email or password");
+    } catch (err) {
+      showError(err, "Invalid email or password.");
     }
   };
 

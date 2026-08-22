@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { ProtectedRoute } from "../../../components/ProtectedRoute";
 import { eightyGAdminApi } from "../../../lib/eighty-g-admin-api";
+import { resolveLoadingToast, showLoading, showWarning } from "@/lib/toast";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 export default function EightyGAdminPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -20,11 +22,21 @@ export default function EightyGAdminPage() {
   const handleApprove = async (id: string) => {
     const file = fileInputRefs.current[id]?.files?.[0];
     if (!file) {
-      alert("Select a certificate PDF first.");
+      showWarning("Select a certificate PDF first.");
       return;
     }
-    await eightyGAdminApi.approve(id, file);
-    load();
+    const toastId = showLoading("Approving and sending certificate...");
+    try {
+      await eightyGAdminApi.approve(id, file);
+      resolveLoadingToast(
+        toastId,
+        "success",
+        "Certificate approved and emailed to the donor",
+      );
+      load();
+    } catch (err) {
+      resolveLoadingToast(toastId, "error", getErrorMessage(err));
+    }
   };
 
   const handleReject = async (id: string) => {

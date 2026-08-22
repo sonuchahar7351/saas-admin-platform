@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { customerAuthApi } from "../../lib/customer-auth-api";
+import { showInfo } from "@/lib/toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -9,8 +10,13 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await customerAuthApi.forgotPassword(email);
-    setSent(true); // always show success, regardless of whether the email existed
+    try {
+      await customerAuthApi.forgotPassword(email);
+      showInfo("If an account exists for that email, we've sent a reset link.");
+      setSent(true);
+    } catch {
+      showInfo("If an account exists for that email, we've sent a reset link.");
+    }
   };
 
   return (

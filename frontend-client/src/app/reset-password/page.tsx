@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { customerAuthApi } from "../../lib/customer-auth-api";
+import { showError, showSuccess } from "@/lib/toast";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -20,12 +21,10 @@ export default function ResetPasswordPage() {
     }
     try {
       await customerAuthApi.resetPassword(token, password);
-      setDone(true);
+      showSuccess("Password reset. Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message || "This link is invalid or has expired.",
-      );
+    } catch (err) {
+      showError(err, "This link is invalid or has expired.");
     }
   };
 

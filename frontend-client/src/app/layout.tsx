@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SupportChatWidget } from "@/components/SupportChatWidget";
+import { Toaster } from "sonner";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -19,6 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <body className="font-body bg-bg text-text">
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          toastOptions={{ style: { fontFamily: "var(--font-body)" } }}
+        />
         <CustomerAuthProvider>
           <ThemeProvider>
             <SiteHeader />

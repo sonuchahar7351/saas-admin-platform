@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { customerAuthApi } from "../../lib/customer-auth-api";
 import { useCustomerAuthStore } from "../../store/customer-auth-store";
+import { showError, showSuccess } from "@/lib/toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,9 +22,10 @@ export default function LoginPage() {
     try {
       const { data } = await customerAuthApi.login(email, password);
       setAuth(data.customer, data.accessToken);
+      showSuccess(`Welcome back, ${data.customer.name}`);
       router.push("/");
-    } catch {
-      setError("That email or password doesn't match our records.");
+    } catch (err) {
+      showError(err);
     } finally {
       setLoading(false);
     }

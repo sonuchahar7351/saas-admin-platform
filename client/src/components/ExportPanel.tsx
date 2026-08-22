@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { donationsAdminApi } from "../lib/donations-admin-api";
+import { resolveLoadingToast, showLoading, showWarning } from "@/lib/toast";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 export function ExportPanel({
   filters,
@@ -26,10 +28,10 @@ export function ExportPanel({
   const download = async (mode: "bulk" | "range" | "selected") => {
     setError("");
     if (mode === "selected" && selectedIds.length === 0) {
-      setError("Select at least one row first.");
+      showWarning("Select at least one row first.");
       return;
     }
-    setLoading(true);
+    const toastId = showLoading("Preparing your export...");
     try {
       const response = await donationsAdminApi.export({
         ...filters,
@@ -46,12 +48,13 @@ export function ExportPanel({
       link.download = `donations-export-${Date.now()}.xlsx`;
       link.click();
       window.URL.revokeObjectURL(url);
+      resolveLoadingToast(toastId, "success", "Export downloaded");
       setOpen(false);
     } catch (err: any) {
-      setError(
-        err.response?.status === 403
-          ? "You don't have permission to export."
-          : "Export failed. Try again.",
+      resolveLoadingToast(
+        toastId,
+        "error",
+        getErrorMessage(err, "Export failed."),
       );
     } finally {
       setLoading(false);

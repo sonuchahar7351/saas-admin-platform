@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { campaignsApi, CampaignRecord } from "../../../lib/campaigns-api";
 import { CampaignCard } from "../../../components/CampaignCard";
+import { showError, showSuccess } from "@/lib/toast";
 
 const TABS = [
   { label: "All", value: "" },
@@ -52,22 +53,34 @@ export default function CampaignsPage() {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    await campaignsApi.changeStatus(id, status);
-    load();
+    try {
+      await campaignsApi.changeStatus(id, status);
+      showSuccess(`Campaign marked as ${status.toLowerCase()}`);
+      load();
+    } catch (err) {
+      showError(err); // this is exactly where the Morph reactivation rejection message now surfaces cleanly
+    }
   };
+
   const handleDuplicate = async (id: string) => {
-    await campaignsApi.duplicate(id);
-    load();
+    try {
+      await campaignsApi.duplicate(id);
+      showSuccess("Campaign duplicated");
+      load();
+    } catch (err) {
+      showError(err);
+    }
   };
+
   const handleDelete = async (id: string) => {
-    if (
-      !confirm(
-        "Delete this campaign? This marks it as deleted but preserves donation history.",
-      )
-    )
-      return;
-    await campaignsApi.delete(id);
-    load();
+    if (!confirm("Delete this campaign?...")) return;
+    try {
+      await campaignsApi.delete(id);
+      showSuccess("Campaign deleted");
+      load();
+    } catch (err) {
+      showError(err);
+    }
   };
 
   return (

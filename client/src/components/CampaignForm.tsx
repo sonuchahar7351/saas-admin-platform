@@ -8,6 +8,7 @@ import { ImageUploadField } from "./ImageUploadField";
 import { categoriesApi, CategoryRecord } from "../lib/categories-api";
 import { aiApi } from "../lib/ai-api";
 import { NgoRecord, ngosApi } from "@/lib/ngo-api";
+import { showSuccess } from "@/lib/toast";
 
 function slugify(title: string) {
   return title
@@ -131,6 +132,11 @@ export function CampaignForm({
     setSaving(true);
     try {
       await onSubmit(form);
+      showSuccess(
+        mode === "create"
+          ? "Campaign created successfully"
+          : "Campaign updated successfully",
+      );
     } catch (err: any) {
       setError(err.response?.data?.message || "Something went wrong.");
     } finally {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { customerAuthApi } from "../../lib/customer-auth-api";
 import { useCustomerAuthStore } from "../../store/customer-auth-store";
+import { showError, showSuccess } from "@/lib/toast";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -20,11 +21,10 @@ export default function RegisterPage() {
     try {
       const { data } = await customerAuthApi.register(form);
       setAuth(data.customer, data.accessToken);
-      router.push("/pricing");
+      showSuccess(`Welcome, ${data.customer.name}!`);
+      router.push("/");
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Something went wrong. Try again.",
-      );
+      showError(err);
     } finally {
       setLoading(false);
     }

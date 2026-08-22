@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
 import { useCustomerAuthStore } from "../../../store/customer-auth-store";
 import { recurringDonationsApi } from "../../../lib/recurring-donations-api";
+import { showError, showSuccess } from "@/lib/toast";
+import Link from "next/link";
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
   CREATED: { label: "Awaiting authorization", color: "text-amber-600" },
@@ -50,7 +51,10 @@ export default function RecurringDonationsPage() {
     setCancellingId(id);
     try {
       await recurringDonationsApi.cancel(id);
+      showSuccess("Recurring donation cancelled");
       load();
+    } catch (err) {
+      showError(err);
     } finally {
       setCancellingId(null);
     }
@@ -61,12 +65,23 @@ export default function RecurringDonationsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="font-heading text-2xl font-semibold">
-        Recurring donations
-      </h1>
-      <p className="mt-1 text-sm text-text-muted">
-        Manage your ongoing support for campaigns.
-      </p>
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <h2 className="font-heading text-lg font-semibold">
+            Recurring Donations
+          </h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Manage your ongoing support for campaigns.
+          </p>
+        </div>
+
+        <Link
+          href="/account"
+          className="text-sm font-medium text-accent hover:underline"
+        >
+          Back To Account
+        </Link>
+      </div>
 
       <div className="mt-8">
         {loading ? (

@@ -5,6 +5,7 @@ import { Plus, Trash2, Pencil } from "lucide-react";
 import { categoriesApi, CategoryRecord } from "@/lib/categories-api";
 import { ImageUploadField } from "@/components/ImageUploadField";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { showError, showSuccess } from "@/lib/toast";
 
 function CategoriesContent() {
   const [items, setItems] = useState<CategoryRecord[]>([]);
@@ -20,23 +21,24 @@ function CategoriesContent() {
 
   const handleSave = async () => {
     if (!editing?.name) return;
-    setError("");
     try {
-      if (editing.id)
+      if (editing.id) {
         await categoriesApi.update(editing.id, {
           name: editing.name,
           imageId: editing.imageId || undefined,
           isActive: editing.isActive,
         });
-      else
+        showSuccess("Category updated successfully");
+      } else
         await categoriesApi.create({
           name: editing.name,
           imageId: editing.imageId || undefined,
         });
+      showSuccess("Category created successfully");
       setEditing(null);
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Could not save.");
+      showError(err);
     }
   };
 
@@ -44,12 +46,10 @@ function CategoriesContent() {
     if (!confirm("Delete this category?")) return;
     try {
       await categoriesApi.delete(id);
+      showSuccess("Category deleted");
       load();
     } catch (err: any) {
-      alert(
-        err.response?.data?.message ||
-          "Could not delete — it may still be in use by a campaign.",
-      );
+      showError(err);
     }
   };
 

@@ -9,6 +9,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { eightyGApi, EightyGStatus } from "../lib/eighty-g-api";
+import { showError, showSuccess } from "@/lib/toast";
 
 export function EightyGSection({
   donationId,
@@ -36,8 +37,8 @@ export function EightyGSection({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setSubmitting(true);
+    setError("");
     try {
       await eightyGApi.apply({
         donationId,
@@ -46,10 +47,10 @@ export function EightyGSection({
       });
       setStatus({ applied: true, status: "PENDING" });
       setShowForm(false);
+      showSuccess("Application submitted — you'll be notified once reviewed.");
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Could not submit your application.",
-      );
+      showError(err);
+      setError(err.response?.data?.message || "Something went wrong.");
     } finally {
       setSubmitting(false);
     }

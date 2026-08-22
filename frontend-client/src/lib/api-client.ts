@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useCustomerAuthStore } from "../store/customer-auth-store";
 import { silentRefresh } from "./auth-refresh";
+import { showError } from "./toast";
 
 export const apiClient = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/v1`,
@@ -41,6 +42,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch {
         useCustomerAuthStore.getState().clearAuth();
+        showError(null, "Your session has expired. Please log in again.");
         return Promise.reject(error);
       } finally {
         isRefreshing = false;
