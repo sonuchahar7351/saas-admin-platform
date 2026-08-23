@@ -20,6 +20,7 @@ import { CacheService } from '../../common/cache/cache.service';
 import { CampaignStatusService } from '../campaigns/campaign-status.service';
 import { CampaignsRepository } from '../campaigns/campaigns.repository';
 import { CampaignsService } from '../campaigns/campaigns.service';
+import { QueryMyDonationsDto } from './dto/query-my-donations.dto';
 
 @Injectable()
 export class DonationsService {
@@ -410,11 +411,10 @@ export class DonationsService {
     };
   }
 
-  async getMyDonations(customerId: string, page = 1, limit = 10) {
+  async getMyDonations(customerId: string, query: QueryMyDonationsDto) {
     const [data, total] = await this.repo.findByCustomerPaginated(
       customerId,
-      page,
-      limit,
+      query,
     );
     return {
       data: data.map((d) => ({
@@ -430,9 +430,9 @@ export class DonationsService {
         createdAt: d.createdAt,
       })),
       total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
     };
   }
 

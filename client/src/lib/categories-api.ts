@@ -4,6 +4,7 @@ export interface CategoryRecord {
   id: string;
   name: string;
   imageId: string | null;
+  imageUrl: string | null;
   isActive: boolean;
 }
 

@@ -21,6 +21,7 @@ import { QueryAdminCampaignsDto } from './dto/query-admin-campaigns.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { CreateMorphCampaignDto } from './dto/create-morph-campaign.dto';
+import { QueryMorphCampaignsDto } from './dto/query-morph-campaigns.dto';
 
 @Controller('campaigns')
 export class CampaignsController {
@@ -31,8 +32,14 @@ export class CampaignsController {
 
   @RequirePermission('campaigns', 'read')
   @Get('morph')
-  findMorphs(@Query('parentCampaignId') parentCampaignId?: string) {
-    return this.service.findMorphs(parentCampaignId);
+  findMorphs(@Query() query: QueryMorphCampaignsDto) {
+    return this.service.findMorphsPaginated(query);
+  }
+
+  @RequirePermission('campaigns', 'read')
+  @Get('morph-parent-candidates')
+  getParentCandidates() {
+    return this.service.getParentCandidates();
   }
 
   @RequirePermission('campaigns', 'read')

@@ -263,6 +263,7 @@ export function CampaignForm({
         onChange={(id, url) =>
           setForm({ ...form, cardImageId: id, cardImageUrl: url })
         }
+        className="aspect-4/3! overflow-hidden h-auto w-90"
       />
 
       <div>

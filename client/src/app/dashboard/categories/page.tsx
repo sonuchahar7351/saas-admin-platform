@@ -158,7 +158,9 @@ function CategoriesContent() {
                 label="Image"
                 category="CATEGORY"
                 mediaId={editing.imageId || null}
+                initialUrl={editing.imageUrl}
                 onChange={(id) => setEditing({ ...editing, imageId: id })}
+                className="w-48 h-40"
               />
             </div>
             <div className="mt-5 flex gap-2">

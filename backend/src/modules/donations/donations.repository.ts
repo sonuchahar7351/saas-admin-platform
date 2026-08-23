@@ -197,12 +197,44 @@ export class DonationsRepository {
     });
   }
 
-  findByCustomerPaginated(customerId: string, page: number, limit: number) {
-    const where = { customerId };
+  findByCustomerPaginated(
+    customerId: string,
+    query: {
+      page: number;
+      limit: number;
+      status?: string;
+      search?: string;
+      sortBy: string;
+      sortOrder: 'asc' | 'desc';
+    },
+  ) {
+    const { page, limit, status, search, sortBy, sortOrder } = query;
+    const where: any = {
+      customerId,
+      ...(status && { status }),
+      ...(search && {
+        OR: [
+          {
+            campaign: {
+              title: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            razorpayOrderId: { contains: search, mode: 'insensitive' as const },
+          },
+          {
+            razorpayPaymentId: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          },
+        ],
+      }),
+    };
     return Promise.all([
       this.prisma.donation.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit,
         include: {

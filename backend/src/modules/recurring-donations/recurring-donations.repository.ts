@@ -53,15 +53,50 @@ export class RecurringDonationsRepository {
     });
   }
 
-  findByCustomer(customerId: string) {
-    return this.prisma.recurringDonation.findMany({
-      where: { customerId },
-      include: {
-        campaign: { select: { title: true, slug: true } },
-        billing: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  findByCustomerPaginated(
+    customerId: string,
+    query: {
+      page: number;
+      limit: number;
+      status?: string;
+      search?: string;
+      sortBy: string;
+      sortOrder: 'asc' | 'desc';
+    },
+  ) {
+    const { page, limit, status, search, sortBy, sortOrder } = query;
+    const where: any = {
+      customerId,
+      ...(status && { status }),
+      ...(search && {
+        OR: [
+          {
+            campaign: {
+              title: { contains: search, mode: 'insensitive' as const },
+            },
+          },
+          {
+            razorpaySubscriptionId: {
+              contains: search,
+              mode: 'insensitive' as const,
+            },
+          },
+        ],
+      }),
+    };
+    return Promise.all([
+      this.prisma.recurringDonation.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          campaign: { select: { title: true, slug: true } },
+          billing: true,
+        },
+      }),
+      this.prisma.recurringDonation.count({ where }),
+    ]);
   }
 
   buildWhere(filters: {
@@ -133,6 +168,7 @@ export class RecurringDonationsRepository {
       include: { campaign: { select: { title: true } }, billing: true },
     });
   }
+
   findForExportRange(where: any, skip: number, take: number) {
     return this.prisma.recurringDonation.findMany({
       where,

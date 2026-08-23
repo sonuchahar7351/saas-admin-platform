@@ -17,11 +17,30 @@ export interface SourceBreakdownItem {
   donationCount: number;
 }
 
+export interface MorphQuery {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+  parentCampaignId?: string;
+}
+
+export interface PaginatedMorphs {
+  data: MorphCampaign[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export const morphCampaignsApi = {
-  getAll: (parentCampaignId?: string) =>
-    apiClient.get<MorphCampaign[]>("/campaigns/morph", {
-      params: { parentCampaignId },
-    }),
+  getAll: (query: MorphQuery) =>
+    apiClient.get<PaginatedMorphs>("/campaigns/morph", { params: query }),
+  getParentCandidates: () =>
+    apiClient.get<{ id: string; title: string }[]>(
+      "/campaigns/morph-parent-candidates",
+    ),
+
   getById: (id: string) => apiClient.get<any>(`/campaigns/morph/${id}`),
   create: (data: { parentCampaignId: string; title: string }) =>
     apiClient.post("/campaigns/morph", data),

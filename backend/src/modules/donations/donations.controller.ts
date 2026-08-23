@@ -26,6 +26,7 @@ import { VerifyDonationDto } from './dto/verify-donation.dto';
 import { ExportDonationsDto } from './dto/export-donations.dto';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { QueryMyDonationsDto } from './dto/query-my-donations.dto';
 
 @Controller('donations')
 export class DonationsController {
@@ -60,16 +61,8 @@ export class DonationsController {
   @Public()
   @UseGuards(CustomerJwtAuthGuard)
   @Get('my-donations')
-  getMyDonations(
-    @Req() req: any,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.service.getMyDonations(
-      req.user.customerId,
-      page ? Number(page) : undefined,
-      limit ? Number(limit) : undefined,
-    );
+  getMyDonations(@Req() req: any, @Query() query: QueryMyDonationsDto) {
+    return this.service.getMyDonations(req.user.customerId, query);
   }
 
   @Public()

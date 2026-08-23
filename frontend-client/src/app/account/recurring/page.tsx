@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import { useCustomerAuthStore } from "../../../store/customer-auth-store";
 import { recurringDonationsApi } from "../../../lib/recurring-donations-api";
-import { showError, showSuccess } from "@/lib/toast";
+import { showError, showSuccess } from "../../../lib/toast";
 import Link from "next/link";
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
@@ -20,6 +21,14 @@ export default function RecurringDonationsPage() {
   const { customer, isLoading } = useCustomerAuthStore();
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("");
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
@@ -31,15 +40,36 @@ export default function RecurringDonationsPage() {
   const load = () => {
     if (!customer) return;
     setLoading(true);
-    recurringDonationsApi.getMine().then(({ data }) => {
-      setItems(data as any[]);
-      setLoading(false);
-    });
+    recurringDonationsApi
+      .getMine({
+        page,
+        limit: 10,
+        status: status || undefined,
+        search: search || undefined,
+        sortBy,
+        sortOrder,
+      })
+      .then(({ data }) => {
+        setItems(data.data);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+        setLoading(false);
+      })
+      .catch((err) => {
+        showError(err, "Could not load your recurring donations.");
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
     load();
-  }, [customer]);
+  }, [customer, page, status, search, sortBy, sortOrder]);
+
+  const runSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput);
+    setPage(1);
+  };
 
   const handleCancel = async (id: string) => {
     if (
@@ -70,20 +100,65 @@ export default function RecurringDonationsPage() {
           <h2 className="font-heading text-lg font-semibold">
             Recurring Donations
           </h2>
-          <p className="mt-1 text-sm text-text-muted">
-            Manage your ongoing support for campaigns.
-          </p>
+          <p className="text-sm text-text-muted">{total} total</p>
         </div>
-
         <Link
           href="/account"
           className="text-sm font-medium text-accent hover:underline"
         >
-          Back To Account
+          Back to account
         </Link>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <form
+          onSubmit={runSearch}
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2"
+        >
+          <Search size={14} className="text-text-muted" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search campaign or subscription ID"
+            className="w-56 text-sm outline-none"
+          />
+        </form>
+        <select
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none"
+        >
+          <option value="">All statuses</option>
+          <option value="CREATED">Created</option>
+          <option value="ACTIVE">Active</option>
+          <option value="PAUSED">Paused</option>
+          <option value="HALTED">Halted</option>
+          <option value="CANCELLED">Cancelled</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
+        <select
+          value={`${sortBy}-${sortOrder}`}
+          onChange={(e) => {
+            const [sb, so] = e.target.value.split("-");
+            setSortBy(sb);
+            setSortOrder(so as "asc" | "desc");
+            setPage(1);
+          }}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none"
+        >
+          <option value="createdAt-desc">Latest</option>
+          <option value="createdAt-asc">Oldest</option>
+          <option value="amount-desc">Highest amount</option>
+          <option value="amount-asc">Lowest amount</option>
+          <option value="nextChargeDate-asc">Next payment date</option>
+          <option value="status-asc">Status</option>
+        </select>
+      </div>
+
+      <div className="mt-6">
         {loading ? (
           <div className="space-y-2">
             {[1, 2].map((i) => (
@@ -96,13 +171,14 @@ export default function RecurringDonationsPage() {
         ) : items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-10 text-center">
             <p className="text-sm text-text-muted">
-              You don't have any recurring donations yet.
+              No recurring donations found matching your filters.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {items.map((r) => {
-              const status = STATUS_STYLES[r.status] || STATUS_STYLES.CREATED;
+              const statusInfo =
+                STATUS_STYLES[r.status] || STATUS_STYLES.CREATED;
               const canCancel = !["CANCELLED", "COMPLETED"].includes(r.status);
               return (
                 <div
@@ -116,11 +192,10 @@ export default function RecurringDonationsPage() {
                         {r.billing.donorName}
                       </p>
                     </div>
-                    <span className={`text-xs font-medium ${status.color}`}>
-                      {status.label}
+                    <span className={`text-xs font-medium ${statusInfo.color}`}>
+                      {statusInfo.label}
                     </span>
                   </div>
-
                   <div className="mt-3 flex items-center gap-4 text-sm">
                     <span className="font-heading font-semibold">
                       ₹{(r.amount / 100).toLocaleString("en-IN")}
@@ -130,7 +205,6 @@ export default function RecurringDonationsPage() {
                         r.frequency.slice(1).toLowerCase()}
                     </span>
                   </div>
-
                   {r.nextChargeDate && r.status === "ACTIVE" && (
                     <p className="mt-1.5 text-xs text-text-muted">
                       Next payment on{" "}
@@ -141,7 +215,6 @@ export default function RecurringDonationsPage() {
                       })}
                     </p>
                   )}
-
                   {r.status === "HALTED" && (
                     <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
                       Your bank declined the last charge. Please cancel and set
@@ -149,7 +222,6 @@ export default function RecurringDonationsPage() {
                       campaign.
                     </p>
                   )}
-
                   {canCancel && (
                     <button
                       onClick={() => handleCancel(r.id)}
@@ -162,6 +234,28 @@ export default function RecurringDonationsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-3 text-sm">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-lg border border-border px-3 py-1.5 disabled:opacity-40"
+            >
+              Prev
+            </button>
+            <span className="text-text-muted">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-lg border border-border px-3 py-1.5 disabled:opacity-40"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

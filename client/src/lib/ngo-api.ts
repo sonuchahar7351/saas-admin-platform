@@ -4,6 +4,7 @@ export interface NgoRecord {
   id: string;
   name: string;
   logoId: string | null;
+  logoUrl: string | null;
   description: string | null;
   website: string | null;
   email: string | null;

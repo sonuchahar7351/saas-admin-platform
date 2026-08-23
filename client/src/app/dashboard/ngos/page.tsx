@@ -205,7 +205,9 @@ function NgosContent() {
                 label="Logo"
                 category="CATEGORY"
                 mediaId={editing.logoId || null}
+                initialUrl={editing.logoUrl}
                 onChange={(id) => setEditing({ ...editing, logoId: id })}
+                className="w-50"
               />
             </div>
             <div className="mt-5 flex gap-2">

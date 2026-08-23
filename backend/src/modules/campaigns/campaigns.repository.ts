@@ -307,23 +307,59 @@ export class CampaignsRepository {
     });
   }
 
-  findMorphs(parentCampaignId?: string) {
-    return this.prisma.campaign.findMany({
-      where: { isMorph: true, ...(parentCampaignId && { parentCampaignId }) },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        parent: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            status: true,
-            goalAmount: true,
-            raisedAmount: true,
-            expiryDate: true,
+  findMorphsPaginated(query: {
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+    parentCampaignId?: string;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  }) {
+    const { page, limit, search, status, parentCampaignId, sortBy, sortOrder } =
+      query;
+    const where: any = {
+      isMorph: true,
+      ...(status && { status }),
+      ...(parentCampaignId && { parentCampaignId }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' as const } },
+          { slug: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }),
+    };
+
+    return Promise.all([
+      this.prisma.campaign.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          parent: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              status: true,
+              goalAmount: true,
+              raisedAmount: true,
+              expiryDate: true,
+            },
           },
         },
-      },
+      }),
+      this.prisma.campaign.count({ where }), // same `where` as the main query — required for the count to actually match the filtered results
+    ]);
+  }
+
+  // used by the frontend's "Parent Campaign" dropdown — normal campaigns only, not deleted
+  findParentCandidates() {
+    return this.prisma.campaign.findMany({
+      where: { isMorph: false, status: { not: 'DELETED' } },
+      select: { id: true, title: true },
+      orderBy: { title: 'asc' },
     });
   }
 

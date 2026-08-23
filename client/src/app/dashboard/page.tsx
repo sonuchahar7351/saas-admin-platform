@@ -251,17 +251,27 @@ export default function DashboardPage() {
         <ReactECharts option={trendOption} style={{ height: 280 }} />
       </ChartCard>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <ChartCard title="Top campaigns">
-            <ReactECharts option={topCampaignsOption} style={{ height: 240 }} />
-          </ChartCard>
-        </div>
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ChartCard title="Top campaigns">
+          <ReactECharts
+            option={topCampaignsOption}
+            style={{ height: 240, width: "100%" }}
+            opts={{ renderer: "svg" }}
+          />
+        </ChartCard>
         <ChartCard title="Category distribution">
-          <ReactECharts option={categoryOption} style={{ height: 240 }} />
+          <ReactECharts
+            option={categoryOption}
+            style={{ height: 240, width: "100%" }}
+            opts={{ renderer: "svg" }}
+          />
         </ChartCard>
         <ChartCard title="Payment status">
-          <ReactECharts option={statusOption} style={{ height: 240 }} />
+          <ReactECharts
+            option={statusOption}
+            style={{ height: 240, width: "100%" }}
+            opts={{ renderer: "svg" }}
+          />
         </ChartCard>
       </div>
 

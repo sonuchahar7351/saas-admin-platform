@@ -16,6 +16,7 @@ import {
 import { buildRecurringWorkbook } from './excel-export.util';
 import { CampaignStatusService } from '../campaigns/campaign-status.service';
 import { CampaignsService } from '../campaigns/campaigns.service';
+import { QueryMyRecurringDto } from './dto/query-my-recurring.dto';
 
 // Razorpay requires a finite total_count of billing cycles — there's no "forever" option.
 // We use a large-but-finite count per frequency (roughly a 5-year horizon) and let
@@ -141,8 +142,18 @@ export class RecurringDonationsService {
     };
   }
 
-  getMyRecurring(customerId: string) {
-    return this.repo.findByCustomer(customerId);
+  async getMyRecurring(customerId: string, query: QueryMyRecurringDto) {
+    const [data, total] = await this.repo.findByCustomerPaginated(
+      customerId,
+      query,
+    );
+    return {
+      data,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
   }
 
   async cancel(id: string, customerId: string) {

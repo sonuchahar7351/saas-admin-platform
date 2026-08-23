@@ -11,12 +11,14 @@ export function ImageUploadField({
   mediaId,
   initialUrl,
   onChange,
+  className = "h-40 w-full",
 }: {
   label: string;
   category: string;
   initialUrl?: string | null;
   mediaId: string | null;
   onChange: (mediaId: string | null, previewUrl: string | null) => void;
+  className?: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(initialUrl || null);
@@ -45,7 +47,7 @@ export function ImageUploadField({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium">{label}</label>
+      <span className="mb-1.5 block text-sm font-medium">{label}</span>
       <input
         ref={inputRef}
         type="file"
@@ -54,7 +56,9 @@ export function ImageUploadField({
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
       />
       {preview || mediaId ? (
-        <div className="relative h-32 w-full overflow-hidden rounded-lg border border-border">
+        <div
+          className={`relative overflow-hidden rounded-lg border border-border ${className}`}
+        >
           {preview && (
             <img src={preview} alt="" className="h-full w-full object-cover" />
           )}

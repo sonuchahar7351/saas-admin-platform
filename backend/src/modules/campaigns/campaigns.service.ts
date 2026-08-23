@@ -13,6 +13,7 @@ import { QueryPublicCampaignsDto } from './dto/query-public-campaigns.dto';
 import { CacheService } from '../../common/cache/cache.service';
 import { CampaignStatusService } from './campaign-status.service';
 import { CreateMorphCampaignDto } from './dto/create-morph-campaign.dto';
+import { QueryMorphCampaignsDto } from './dto/query-morph-campaigns.dto';
 
 // allowed forward transitions only — no jumping straight to COMPLETED from CREATED, etc.
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -421,9 +422,23 @@ export class CampaignsService {
     );
   }
 
-  async findMorphs(parentCampaignId?: string) {
-    const morphs = await this.repo.findMorphs(parentCampaignId);
-    return this.attachImageUrls(morphs); // reuses your existing batch image resolver, unchanged
+  async findMorphsPaginated(query: QueryMorphCampaignsDto) {
+    const [data, total] = await this.repo.findMorphsPaginated(query);
+    const withImages = await this.attachImageUrls(data);
+    const withStatus = await Promise.all(
+      withImages.map((c) => this.withStatusEvaluation(c)),
+    );
+    return {
+      data: withStatus,
+      total,
+      page: query.page,
+      limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
+    };
+  }
+
+  getParentCandidates() {
+    return this.repo.findParentCandidates();
   }
 
   async findMorphById(id: string) {

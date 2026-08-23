@@ -53,7 +53,7 @@ export function CampaignCard({
 
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-surface transition-shadow hover:shadow-sm">
-      <div className="relative h-36 bg-[#F1F2F4]">
+      <div className="relative h-60 bg-[#F1F2F4]">
         {/* image renders once media URLs are wired through — placeholder for now */}
         <div className="flex h-full items-center justify-center text-xs text-text-secondary">
           {campaign.cardImageUrl ? (

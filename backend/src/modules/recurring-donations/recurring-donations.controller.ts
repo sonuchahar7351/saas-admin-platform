@@ -25,6 +25,7 @@ import {
   ExportRecurringDto,
   QueryRecurringDto,
 } from './dto/query-recurring.dto';
+import { QueryMyRecurringDto } from './dto/query-my-recurring.dto';
 
 @Controller('recurring-donations')
 export class RecurringDonationsController {
@@ -48,8 +49,8 @@ export class RecurringDonationsController {
   @Public()
   @UseGuards(CustomerJwtAuthGuard)
   @Get('my')
-  getMine(@Req() req: any) {
-    return this.service.getMyRecurring(req.user.customerId);
+  getMine(@Req() req: any, @Query() query: QueryMyRecurringDto) {
+    return this.service.getMyRecurring(req.user.customerId, query);
   }
 
   @RequirePermission('recurringDonations', 'read')

@@ -71,11 +71,6 @@ export const navItems: NavItem[] = [
     roles: ["SUPER_ADMIN"],
   },
   {
-    label: "AI Insights",
-    href: "/dashboard/ai-insights",
-    roles: ["SUPER_ADMIN"],
-  },
-  {
     label: "Media Library",
     href: "/dashboard/media",
     roles: ["SUPER_ADMIN", "SUB_ADMIN"],

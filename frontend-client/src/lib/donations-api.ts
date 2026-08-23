@@ -41,6 +41,15 @@ export interface DonationListItem {
   createdAt: string;
 }
 
+export interface MyDonationsQuery {
+  page: number;
+  limit: number;
+  status?: string;
+  search?: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+}
+
 export interface PaginatedDonations {
   data: DonationListItem[];
   total: number;
@@ -86,9 +95,9 @@ export const donationsApi = {
 };
 
 export const myDonationsApi = {
-  getAll: (page = 1, limit = 10) =>
+  getAll: (query: MyDonationsQuery) =>
     apiClient.get<PaginatedDonations>("/donations/my-donations", {
-      params: { page, limit },
+      params: query,
     }),
   getById: (id: string) =>
     apiClient.get<DonationSummary>(`/donations/my-donations/${id}`),
