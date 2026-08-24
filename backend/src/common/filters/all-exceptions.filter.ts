@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nestjs';
 import {
   ExceptionFilter,
   Catch,
@@ -36,6 +37,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
+      Sentry.captureException(exception);
     }
 
     const isAppException = exception instanceof AppException;

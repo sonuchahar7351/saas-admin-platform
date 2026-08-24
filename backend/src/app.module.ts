@@ -36,6 +36,7 @@ import { PermissionsCacheModule } from './common/permissions-cache/permissions-c
 import { CacheModule } from './common/cache/cashe.module';
 import { ReportsQueueModule } from './queues/reports/reports-queue.module';
 import { CampaignStatusQueueModule } from './queues/campaign-status/campaign-status-queue.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { CampaignStatusQueueModule } from './queues/campaign-status/campaign-sta
     CacheModule,
     ReportsQueueModule,
     CampaignStatusQueueModule,
+    HealthModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
