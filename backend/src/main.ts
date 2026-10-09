@@ -1,4 +1,4 @@
-import './instrument'; 
+import './instrument';
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -62,10 +62,12 @@ async function bootstrap() {
 
   // Enable CORS for your Next.js client
   app.use(cookieParser());
-  app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3002'], // client + frontend-client
-    credentials: true,
-  });
+  const allowedOrigins = (
+    process.env.CORS_ORIGINS || 'http://localhost:3001,http://localhost:3002'
+  )
+    .split(',')
+    .map((s) => s.trim());
+  app.enableCors({ origin: allowedOrigins, credentials: true });
 
   await app.listen(process.env.PORT ?? 3000);
 }

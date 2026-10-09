@@ -37,7 +37,7 @@ export async function generateMetadata({
   if (!campaign) return { title: "Campaign not found" };
 
   return {
-    title: `${campaign.title} | GiveForward`,
+    title: `${campaign.title} | ${process.env.NEXT_PUBLIC_APP_NAME}`,
     description: campaign.shortDescription,
     openGraph: {
       title: campaign.title,

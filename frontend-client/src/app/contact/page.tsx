@@ -24,7 +24,7 @@ export default function ContactPage() {
             <p className="mt-3 text-sm leading-7 ">
               For help with your account, campaigns, or donations, email us at:
             </p>
-            <p className="mt-3 break-words text-sm font-medium text-text">
+            <p className="mt-3 wrap-break-word text-sm font-medium text-text">
               <Link
                 href="mailto:support@giveforward.example.com"
                 className="text-accent hover:underline"
@@ -38,7 +38,8 @@ export default function ContactPage() {
             <h2 className="font-semibold">General inquiries</h2>
             <p className="mt-3 text-sm leading-7 text-text-muted">
               Send us an email or connect with us on our platform to learn more
-              about how GiveForward can support your fundraising goals.
+              about how {process.env.NEXT_PUBLIC_APP_NAME} can support your
+              fundraising goals.
             </p>
             <div className="mt-6 space-y-3 text-sm leading-7">
               <p>

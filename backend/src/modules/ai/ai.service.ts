@@ -4,7 +4,7 @@ import { OpenAIProvider } from './providers/openai.provider';
 import { GeminiProvider } from './providers/gemini.provider';
 
 const PLATFORM_FACTS = `
-Platform name: GiveForward
+Platform name: ${process.env.APP_NAME}
 What it does: A crowdfunding platform connecting donors with verified NGO campaigns.
 Key facts:
 - Donations can be made as a guest (no account required) or logged in.
@@ -150,7 +150,7 @@ Amount: ₹${(input.amount / 100).toFixed(2)}`;
       ? `\nThe visitor is currently viewing this campaign:\nTitle: ${campaignContext.title}\nNGO: ${campaignContext.ngoName}\nDescription: ${campaignContext.shortDescription}`
       : '';
 
-    const systemPrompt = `You are a helpful, warm support assistant for a crowdfunding donation platform called GiveForward.
+    const systemPrompt = `You are a helpful, warm support assistant for a crowdfunding donation platform called ${process.env.APP_NAME}.
 
 ${PLATFORM_FACTS}
 

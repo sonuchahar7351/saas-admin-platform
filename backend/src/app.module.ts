@@ -37,9 +37,15 @@ import { CacheModule } from './common/cache/cashe.module';
 import { ReportsQueueModule } from './queues/reports/reports-queue.module';
 import { CampaignStatusQueueModule } from './queues/campaign-status/campaign-status-queue.module';
 import { HealthModule } from './modules/health/health.module';
+import { ConfigModule } from '@nestjs/config';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+    }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     RedisModule,
     PermissionsCacheModule,

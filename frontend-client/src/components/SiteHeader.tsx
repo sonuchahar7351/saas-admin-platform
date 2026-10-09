@@ -79,7 +79,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         {/* Desktop logo (left) */}
         <Link href="/" className="font-heading text-lg font-semibold">
-          GiveForward
+          {process.env.NEXT_PUBLIC_APP_NAME}
         </Link>
 
         {/* Desktop nav */}
@@ -191,7 +191,7 @@ export function SiteHeader() {
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-4">
             <span className="font-heading text-lg font-semibold">
-              GiveForward
+              {process.env.NEXT_PUBLIC_APP_NAME}
             </span>
             <button
               type="button"

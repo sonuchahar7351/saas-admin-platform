@@ -36,4 +36,7 @@ export const mediaApi = {
   bulkDelete: (ids: string[]) => apiClient.post("/media/bulk-delete", { ids }),
 
   delete: (id: string) => apiClient.delete(`/media/${id}`),
+
+  generate: (prompt: string, category: string) =>
+    apiClient.post<MediaRecord>("/media/generate", { prompt, category }),
 };

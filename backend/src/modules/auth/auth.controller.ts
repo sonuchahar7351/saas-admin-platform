@@ -30,10 +30,11 @@ export class AuthController {
   ) {
     const { accessToken, refreshToken, user } =
       await this.authService.login(dto);
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd, // HTTPS required in prod — Render/Vercel both provide this automatically
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     return { accessToken, user };
@@ -49,10 +50,11 @@ export class AuthController {
     const oldRefreshToken = req.cookies?.refreshToken;
     const { accessToken, refreshToken } =
       await this.authService.refresh(oldRefreshToken);
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd, // HTTPS required in prod — Render/Vercel both provide this automatically
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     return { accessToken };

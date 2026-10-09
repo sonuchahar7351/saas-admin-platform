@@ -20,6 +20,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermission } from '../../common/decorators/permission.decorator';
 import type { MulterFile } from '../../common/types/multer-file.type';
 import { BulkDeleteDto } from './dto/bulk-delete.dto';
+import { Throttle } from '@nestjs/throttler';
+import { GenerateImageDto } from './dto/generate-image.dto';
 
 @Controller('media')
 export class MediaController {
@@ -43,6 +45,14 @@ export class MediaController {
   ) {
     return this.service.upload(file, dto, user.userId);
   }
+
+  @RequirePermission('media', 'write')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // image generation costs real money per call — bound it
+  @Post('generate')
+  generate(@Body() dto: GenerateImageDto, @CurrentUser() user: any) {
+    return this.service.generateAndStore(dto.prompt, dto.category, user.userId);
+  }
+
   @RequirePermission('media', 'read')
   @Get()
   findAll(

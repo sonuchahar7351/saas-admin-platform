@@ -4,16 +4,16 @@ export default function AboutPage() {
       <div className="space-y-6 rounded-3xl border border-border bg-surface p-8 shadow-sm sm:p-12">
         <div className="max-w-3xl space-y-4">
           <p className="inline-flex rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
-            About GiveForward
+            About {process.env.NEXT_PUBLIC_APP_NAME}
           </p>
           <h1 className="font-heading text-4xl font-semibold sm:text-5xl">
             Empowering changemakers through simple fundraising.
           </h1>
           <p className="max-w-2xl text-base leading-8 text-text-muted sm:text-lg">
-            GiveForward connects donors and campaigns with a modern, trust-first
-            platform designed to help every story find support. We make it easy
-            to discover meaningful causes, give with confidence, and track the
-            impact of every gift.
+            {process.env.NEXT_PUBLIC_APP_NAME} connects donors and campaigns
+            with a modern, trust-first platform designed to help every story
+            find support. We make it easy to discover meaningful causes, give
+            with confidence, and track the impact of every gift.
           </p>
         </div>
 
@@ -43,13 +43,16 @@ export default function AboutPage() {
 
         <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Why GiveForward?</h2>
+            <h2 className="text-2xl font-semibold">
+              Why {process.env.NEXT_PUBLIC_APP_NAME}?
+            </h2>
             <p className="text-base leading-8 text-text-muted">
               We believe in the power of everyday generosity. Our platform is
               built to support authentic campaigns with easy browsing, fast
               payment flows, and simple tools for campaign owners. Whether
               you're giving for the first time or looking to scale a fundraising
-              effort, GiveForward helps make every donation count.
+              effort, {process.env.NEXT_PUBLIC_APP_NAME} helps make every
+              donation count.
             </p>
             <ul className="space-y-3 text-sm leading-7 text-text-muted">
               <li>

@@ -104,7 +104,7 @@ export class EmailService {
     await this.transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
-      subject: 'Your weekly GiveForward summary',
+      subject: `Your weekly ${process.env.APP_NAME} summary`,
       html,
     });
   }

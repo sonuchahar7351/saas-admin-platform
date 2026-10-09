@@ -5,11 +5,11 @@ import { HomeClient } from "../components/HomeClient";
 export const revalidate = 60; // same reasoning as campaign detail — donation totals shift, don't go fully static
 
 export const metadata: Metadata = {
-  title: "GiveForward — Crowdfunding for the causes that matter",
+  title: `${process.env.NEXT_PUBLIC_APP_NAME} — Crowdfunding for the causes that matter`,
   description:
     "Discover and support verified campaigns. Every donation is tracked, transparent, and makes a real difference.",
   openGraph: {
-    title: "GiveForward — Crowdfunding for the causes that matter",
+    title: `${process.env.NEXT_PUBLIC_APP_NAME} — Crowdfunding for the causes that matter`,
     description:
       "Discover and support verified campaigns. Every donation is tracked, transparent, and makes a real difference.",
     type: "website",
